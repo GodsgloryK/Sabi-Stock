@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Your Smart-Stock business dashboard." />
+    <meta name="theme-color" content="#f6f8f5" />
+    <title>Dashboard — Smart-Stock</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+    <script src="./js/config.js" defer></script>
+    <script src="./js/dashboard.js" defer></script>
+  </head>
+  <body class="dashboard-page">
+    <header class="site-header dashboard-header">
+      <a class="brand" href="./index.html" aria-label="Smart-Stock home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+            <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+            <path d="m11 7 11 5.6" />
+          </svg>
+        </span>
+        <span>Smart<span class="brand__accent">-Stock</span></span>
+      </a>
+      <nav class="dashboard-nav" aria-label="Workspace navigation">
+        <a class="dashboard-nav__link dashboard-nav__link--active" href="./dashboard.html" aria-current="page">Dashboard</a>
+        <a class="dashboard-nav__link" href="./products.html">Products</a>
+        <a class="dashboard-nav__link" href="./sales.html">Sales</a>
+      </nav>
+      <div class="dashboard-header__account">
+        <span class="dashboard-avatar" aria-hidden="true" data-avatar>•</span>
+        <span class="dashboard-header__identity" data-user-identity>Loading account…</span>
+        <button class="button button--secondary button--small" type="button" data-logout>Log out</button>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <section class="dashboard-title">
+        <div>
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Business overview</p>
+          <h1>Good to see you.</h1>
+          <p class="dashboard-title__subtext">Here’s what’s happening with your business today.</p>
+        </div>
+        <div class="dashboard-title__actions">
+          <p class="dashboard-updated" data-last-updated>Waiting for latest data</p>
+          <button class="button button--secondary refresh-button" type="button" data-refresh>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.4 8A6.7 6.7 0 0 0 4.7 5.5L3 7.2M3.2 3.7v3.7h3.7M3.6 12a6.7 6.7 0 0 0 11.7 2.5l1.7-1.7m-.2 3.5v-3.7h-3.7" /></svg>
+            <span data-refresh-label>Refresh data</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="dashboard-message" role="alert" aria-live="polite" data-dashboard-message hidden></div>
+
+      <section class="dashboard-metrics" aria-label="Business metrics">
+        <article class="metric-card">
+          <div class="metric-card__top">
+            <span class="metric-card__label">Total products</span>
+            <span class="metric-icon metric-icon--products" aria-hidden="true">▦</span>
+          </div>
+          <p class="metric-card__value" data-total-products>—</p>
+          <p class="metric-card__note">Products in your catalogue</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-card__top">
+            <span class="metric-card__label">Total stock quantity</span>
+            <span class="metric-icon metric-icon--stock" aria-hidden="true">▤</span>
+          </div>
+          <p class="metric-card__value" data-total-stock>—</p>
+          <p class="metric-card__note">Units currently in stock</p>
+        </article>
+        <article class="metric-card metric-card--highlight">
+          <div class="metric-card__top">
+            <span class="metric-card__label">Today's sales</span>
+            <span class="metric-icon metric-icon--sales" aria-hidden="true">↗</span>
+          </div>
+          <p class="metric-card__value" data-today-sales>—</p>
+          <p class="metric-card__note">Total sales amount today</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-card__top">
+            <span class="metric-card__label">Today's profit</span>
+            <span class="metric-icon metric-icon--profit" aria-hidden="true">✳</span>
+          </div>
+          <p class="metric-card__value" data-today-profit>—</p>
+          <p class="metric-card__note">Profit from today's sales</p>
+        </article>
+      </section>
+
+      <section class="dashboard-content-grid">
+        <article class="dashboard-panel chart-panel">
+          <div class="dashboard-panel__heading">
+            <div>
+              <h2>Best-selling products</h2>
+              <p>Top 5 by total quantity sold</p>
+            </div>
+            <span class="panel-period">All time</span>
+          </div>
+          <div class="chart-container" data-chart-container>
+            <canvas id="top-products-chart" aria-label="Bar chart of the five best-selling products by units sold"></canvas>
+          </div>
+          <p class="panel-empty" data-chart-empty hidden>No sales recorded yet. Your top products will appear here.</p>
+        </article>
+
+        <article class="dashboard-panel low-stock-panel">
+          <div class="dashboard-panel__heading">
+            <div>
+              <h2>Low stock</h2>
+              <p>Products with fewer than 5 units</p>
+            </div>
+            <a class="panel-link" href="./products.html">View products <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="low-stock-list" data-low-stock-list>
+            <p class="panel-loading">Loading stock levels…</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-panel top-products-panel">
+        <div class="dashboard-panel__heading">
+          <div>
+            <h2>Top products</h2>
+            <p>Ranked by units sold across your business</p>
+          </div>
+          <a class="panel-link" href="./sales.html">View sales <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="dashboard-table-wrap">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th scope="col">Rank</th>
+                <th scope="col">Product</th>
+                <th scope="col">Quantity sold</th>
+              </tr>
+            </thead>
+            <tbody data-top-products>
+              <tr><td class="dashboard-table__empty" colspan="3">Loading your best sellers…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="dashboard-footer">
+      <span>Smart-Stock</span>
+      <span>Your business, clearly in view.</span>
+    </footer>
+  </body>
+</html>

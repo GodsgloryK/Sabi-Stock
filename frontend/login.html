@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Login to your Smart-Stock workspace." />
+    <meta name="theme-color" content="#f6f8f5" />
+    <title>Login — Smart-Stock</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script src="./js/config.js" defer></script>
+    <script src="./js/auth.js" defer></script>
+  </head>
+  <body class="auth-page">
+    <main class="auth-layout">
+      <aside class="auth-aside">
+        <a class="brand" href="./index.html" aria-label="Smart-Stock home">
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+              <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+              <path d="m11 7 11 5.6" />
+            </svg>
+          </span>
+          <span>Smart<span class="brand__accent">-Stock</span></span>
+        </a>
+        <div class="auth-aside__content">
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Welcome back</p>
+          <h2>Your business, all in view.</h2>
+          <p class="auth-aside__text">Sign in to return to your Smart-Stock workspace and pick up where you left off.</p>
+        </div>
+        <p class="auth-aside__footer">A clearer view, every day.</p>
+      </aside>
+
+      <section class="auth-main" aria-labelledby="login-title">
+        <div class="auth-form-wrap">
+          <a class="brand" href="./index.html" aria-label="Smart-Stock home">
+            <span class="brand__mark" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+                <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+                <path d="m11 7 11 5.6" />
+              </svg>
+            </span>
+            <span>Smart<span class="brand__accent">-Stock</span></span>
+          </a>
+          <div class="auth-intro">
+            <h1 id="login-title">Welcome back</h1>
+            <p>Enter your details to login to your account.</p>
+          </div>
+
+          <form data-auth-form="login" novalidate>
+            <div class="form-field">
+              <label for="email">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="you@business.com"
+                maxlength="254"
+                required
+                data-clear-message
+              />
+            </div>
+            <div class="form-field">
+              <label for="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+                maxlength="128"
+                required
+                data-clear-message
+              />
+            </div>
+            <div class="form-message form-message--error" role="alert" aria-live="polite" data-form-message hidden></div>
+            <button class="button auth-submit" type="submit">Login</button>
+          </form>
+
+          <p class="auth-switch">New to Smart-Stock? <a href="./register.html">Create an account</a></p>
+          <a class="back-home" href="./index.html">← Back to home</a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

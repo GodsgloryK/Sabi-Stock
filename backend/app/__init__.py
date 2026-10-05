@@ -1,0 +1,1 @@
+"""Sabi-Stock API application."""

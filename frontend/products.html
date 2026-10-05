@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Manage products for your Smart-Stock business." />
+    <meta name="theme-color" content="#f6f8f5" />
+    <title>Products — Smart-Stock</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script src="./js/config.js" defer></script>
+    <script src="./js/products.js" defer></script>
+  </head>
+  <body class="products-page">
+    <header class="site-header products-header">
+      <a class="brand" href="./index.html" aria-label="Smart-Stock home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+            <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+            <path d="m11 7 11 5.6" />
+          </svg>
+        </span>
+        <span>Smart<span class="brand__accent">-Stock</span></span>
+      </a>
+      <nav class="dashboard-nav" aria-label="Workspace navigation">
+        <a class="dashboard-nav__link" href="./dashboard.html">Dashboard</a>
+        <a class="dashboard-nav__link dashboard-nav__link--active" href="./products.html" aria-current="page">Products</a>
+        <a class="dashboard-nav__link" href="./sales.html">Sales</a>
+      </nav>
+      <div class="products-header__right">
+        <p class="business-identity" data-business-identity>Loading account…</p>
+        <button class="button button--secondary button--small" type="button" data-logout>Log out</button>
+      </div>
+    </header>
+
+    <main class="products-main">
+      <section class="products-title">
+        <div>
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Your catalogue</p>
+          <h1>Products</h1>
+          <p class="products-title__description">Keep your product details and stock in one place.</p>
+        </div>
+        <button class="button" type="button" data-add-product>
+          <span aria-hidden="true">＋</span> Add product
+        </button>
+      </section>
+
+      <section class="product-form-card" data-form-card hidden aria-labelledby="product-form-title">
+        <div class="product-form-card__heading">
+          <div>
+            <h2 id="product-form-title" data-form-title>Add a product</h2>
+            <p>Enter the details you use to track this product.</p>
+          </div>
+          <button class="icon-button" type="button" data-cancel-form aria-label="Close product form">×</button>
+        </div>
+        <form class="product-form" data-product-form novalidate>
+          <div class="form-field">
+            <label for="product-name">Product name</label>
+            <input id="product-name" name="name" type="text" maxlength="160" required />
+          </div>
+          <div class="form-field">
+            <label for="product-category">Category</label>
+            <input id="product-category" name="category" type="text" maxlength="80" required />
+          </div>
+          <div class="form-field">
+            <label for="buying-price">Buying price</label>
+            <input id="buying-price" name="buying_price" type="number" min="0" max="9999999999.99" step="0.01" inputmode="decimal" required />
+          </div>
+          <div class="form-field">
+            <label for="selling-price">Selling price</label>
+            <input id="selling-price" name="selling_price" type="number" min="0" max="9999999999.99" step="0.01" inputmode="decimal" required />
+          </div>
+          <div class="form-field">
+            <label for="stock-quantity">Stock quantity</label>
+            <input id="stock-quantity" name="stock_quantity" type="number" min="0" max="2147483647" step="1" inputmode="numeric" required />
+          </div>
+          <div class="product-form__actions">
+            <button class="button button--secondary" type="button" data-cancel-form>Cancel</button>
+            <button class="button" type="submit" data-save-product>Save product</button>
+          </div>
+        </form>
+      </section>
+
+      <div class="form-message product-page-message" role="alert" aria-live="polite" data-page-message hidden></div>
+
+      <section class="products-card" aria-labelledby="products-list-title">
+        <div class="products-card__top">
+          <div>
+            <h2 id="products-list-title">Your products</h2>
+            <p data-product-count>Loading products…</p>
+          </div>
+          <div class="product-filters">
+            <label class="search-field">
+              <span class="visually-hidden">Search products</span>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.8" cy="8.8" r="5.8"></circle><path d="m13.2 13.2 4 4"></path></svg>
+              <input type="search" placeholder="Search products" autocomplete="off" data-search />
+            </label>
+            <label class="visually-hidden" for="category-filter">Filter by category</label>
+            <select id="category-filter" class="category-filter" data-category-filter>
+              <option value="">All categories</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="products-table-wrap">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th scope="col">Product</th>
+                <th scope="col">Category</th>
+                <th scope="col">Buying price</th>
+                <th scope="col">Selling price</th>
+                <th scope="col">Stock quantity</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody data-products-body>
+              <tr><td class="products-table__status" colspan="6">Loading your products…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <a class="products-back-link" href="./dashboard.html">← Back to workspace</a>
+    </main>
+  </body>
+</html>

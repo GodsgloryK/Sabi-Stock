@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Record sales and review sales history for your Smart-Stock business." />
+    <meta name="theme-color" content="#f6f8f5" />
+    <title>Sales — Smart-Stock</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script src="./js/config.js" defer></script>
+    <script src="./js/sales.js" defer></script>
+  </head>
+  <body class="products-page">
+    <header class="site-header products-header">
+      <a class="brand" href="./index.html" aria-label="Smart-Stock home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+            <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+            <path d="m11 7 11 5.6" />
+          </svg>
+        </span>
+        <span>Smart<span class="brand__accent">-Stock</span></span>
+      </a>
+      <nav class="dashboard-nav" aria-label="Workspace navigation">
+        <a class="dashboard-nav__link" href="./dashboard.html">Dashboard</a>
+        <a class="dashboard-nav__link" href="./products.html">Products</a>
+        <a class="dashboard-nav__link dashboard-nav__link--active" href="./sales.html" aria-current="page">Sales</a>
+      </nav>
+      <div class="products-header__right">
+        <p class="business-identity" data-business-identity>Loading account…</p>
+        <button class="button button--secondary button--small" type="button" data-logout>Log out</button>
+      </div>
+    </header>
+
+    <main class="products-main">
+      <section class="products-title">
+        <div>
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Sales activity</p>
+          <h1>Sales</h1>
+          <p class="products-title__description">Record a sale and keep your stock levels up to date.</p>
+        </div>
+        <a class="button button--secondary" href="./products.html">Manage products</a>
+      </section>
+
+      <section class="sale-form-card" aria-labelledby="sale-form-title">
+        <div class="sale-form-card__heading">
+          <div>
+            <h2 id="sale-form-title">Record a sale</h2>
+            <p>Select a product and enter the quantity sold.</p>
+          </div>
+          <span class="sale-form-card__icon" aria-hidden="true">↗</span>
+        </div>
+        <form class="sale-form" data-sale-form novalidate>
+          <div class="form-field">
+            <label for="sale-product">Product</label>
+            <select id="sale-product" name="product_id" required data-sale-product>
+              <option value="">Loading products…</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="sale-quantity">Quantity sold</label>
+            <input id="sale-quantity" name="quantity" type="number" min="1" max="2147483647" step="1" inputmode="numeric" placeholder="Enter quantity" required data-sale-quantity />
+          </div>
+          <div class="sale-stock-panel" aria-live="polite">
+            <span class="sale-stock-panel__label">Available stock</span>
+            <strong data-available-stock>—</strong>
+          </div>
+          <button class="button sale-submit" type="submit" data-submit-sale>Record sale</button>
+        </form>
+      </section>
+
+      <div class="form-message product-page-message" role="alert" aria-live="polite" data-sales-message hidden></div>
+
+      <section class="products-card sales-history-card" aria-labelledby="sales-history-title">
+        <div class="products-card__top">
+          <div>
+            <h2 id="sales-history-title">Sales history</h2>
+            <p data-sales-count>Loading sales…</p>
+          </div>
+        </div>
+        <div class="products-table-wrap">
+          <table class="products-table sales-table">
+            <thead>
+              <tr>
+                <th scope="col">Product</th>
+                <th scope="col">Quantity sold</th>
+                <th scope="col">Total amount</th>
+                <th scope="col">Profit</th>
+                <th scope="col">Date</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody data-sales-body>
+              <tr><td class="products-table__status" colspan="6">Loading your sales…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <a class="products-back-link" href="./dashboard.html">← Back to workspace</a>
+    </main>
+  </body>
+</html>

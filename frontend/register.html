@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Create your Smart-Stock business account." />
+    <meta name="theme-color" content="#f6f8f5" />
+    <title>Create account — Smart-Stock</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script src="./js/config.js" defer></script>
+    <script src="./js/auth.js" defer></script>
+  </head>
+  <body class="auth-page">
+    <main class="auth-layout">
+      <aside class="auth-aside">
+        <a class="brand" href="./index.html" aria-label="Smart-Stock home">
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+              <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+              <path d="m11 7 11 5.6" />
+            </svg>
+          </span>
+          <span>Smart<span class="brand__accent">-Stock</span></span>
+        </a>
+        <div class="auth-aside__content">
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Start with clarity</p>
+          <h2>Make room for the next stage of your business.</h2>
+          <p class="auth-aside__text">Bring your products, inventory, and sales into one organized workspace.</p>
+        </div>
+        <p class="auth-aside__footer">A better view of your business starts here.</p>
+      </aside>
+
+      <section class="auth-main" aria-labelledby="register-title">
+        <div class="auth-form-wrap">
+          <a class="brand" href="./index.html" aria-label="Smart-Stock home">
+            <span class="brand__mark" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+                <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+                <path d="m11 7 11 5.6" />
+              </svg>
+            </span>
+            <span>Smart<span class="brand__accent">-Stock</span></span>
+          </a>
+          <div class="auth-intro">
+            <h1 id="register-title">Create your account</h1>
+            <p>Set up your business workspace to get started.</p>
+          </div>
+
+          <form data-auth-form="register" novalidate>
+            <div class="form-field">
+              <label for="full-name">Your name</label>
+              <input
+                id="full-name"
+                name="full_name"
+                type="text"
+                autocomplete="name"
+                placeholder="e.g. Alex Morgan"
+                minlength="1"
+                maxlength="120"
+                required
+                data-trim-required
+                data-clear-message
+              />
+            </div>
+            <div class="form-field">
+              <label for="business-name">Business name</label>
+              <input
+                id="business-name"
+                name="business_name"
+                type="text"
+                autocomplete="organization"
+                placeholder="e.g. Morgan Supply Co."
+                minlength="1"
+                maxlength="160"
+                required
+                data-trim-required
+                data-clear-message
+              />
+            </div>
+            <div class="form-field">
+              <label for="email">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="you@business.com"
+                maxlength="254"
+                required
+                data-clear-message
+              />
+            </div>
+            <div class="form-field">
+              <label for="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Create a strong password"
+                minlength="12"
+                maxlength="128"
+                aria-describedby="password-hint"
+                required
+                data-clear-message
+              />
+              <p class="form-hint" id="password-hint">Use at least 12 characters.</p>
+            </div>
+            <div class="form-message form-message--error" role="alert" aria-live="polite" data-form-message hidden></div>
+            <button class="button auth-submit" type="submit">Create business account</button>
+          </form>
+
+          <p class="auth-switch">Already have an account? <a href="./login.html">Login</a></p>
+          <a class="back-home" href="./index.html">← Back to home</a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
