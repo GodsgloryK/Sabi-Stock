@@ -1,3 +1,3 @@
 window.SMART_STOCK_CONFIG = Object.freeze({
-  apiBaseUrl: "http://127.0.0.1:8000",
+  apiBaseUrl: "https://sabi-stock-1.onrender.com/",
 });
