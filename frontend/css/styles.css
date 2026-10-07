@@ -39,6 +39,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  overflow-x: hidden;
   background: var(--color-background);
   color: var(--color-text);
 }
@@ -183,6 +184,7 @@ button,
 }
 
 .hero {
+  position: relative;
   display: grid;
   min-height: 610px;
   padding-block: 3rem 5rem;
@@ -191,7 +193,42 @@ button,
   gap: 4rem;
 }
 
+.hero::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: url("../images/smart-stock-workspace.jpg") center / cover no-repeat;
+  opacity: 0.12;
+  filter: grayscale(30%);
+  pointer-events: none;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    var(--color-background) 0%,
+    rgb(246 248 245 / 92%) 34%,
+    rgb(246 248 245 / 0%) 72%
+  );
+  pointer-events: none;
+}
+
 .hero__copy {
+  position: relative;
+  z-index: 1;
   max-width: 570px;
   padding-bottom: 1rem;
 }
@@ -269,46 +306,10 @@ h3 {
 
 .hero-art {
   position: relative;
+  z-index: 1;
   display: grid;
   min-height: 400px;
   place-items: center;
-}
-
-.hero-art__glow {
-  position: absolute;
-  width: min(95%, 410px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, #e4efdf 0%, #edf3e9 52%, transparent 72%);
-}
-
-.hero-photo {
-  position: relative;
-  z-index: 1;
-  width: min(86%, 420px);
-  aspect-ratio: 1;
-  margin: 0;
-  padding: 14px;
-  border-radius: 50%;
-  background: var(--color-surface);
-  box-shadow: 0 30px 65px rgb(24 38 31 / 16%), 0 0 0 1px var(--color-border);
-}
-
-.hero-photo::after {
-  content: "";
-  position: absolute;
-  inset: -13px;
-  border: 1.5px solid rgb(25 118 79 / 22%);
-  border-radius: 50%;
-}
-
-.hero-photo img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: center;
 }
 
 .art-tag {
@@ -1232,11 +1233,6 @@ h3 {
     min-height: 340px;
   }
 
-  .hero-photo {
-    width: min(88%, 330px);
-    padding: 12px;
-  }
-
   .auth-layout {
     width: min(100%, 580px);
     min-height: auto;
@@ -1338,13 +1334,13 @@ h3 {
     margin-top: 0.75rem;
   }
 
-  .hero-photo {
-    width: min(76%, 300px);
-    padding: 10px;
-  }
-
-  .hero-photo::after {
-    inset: -10px;
+  .hero::after {
+    background: linear-gradient(
+      180deg,
+      var(--color-background) 0%,
+      rgb(246 248 245 / 94%) 45%,
+      rgb(246 248 245 / 55%) 100%
+    );
   }
 
   .art-tag--top {
