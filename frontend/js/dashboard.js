@@ -122,27 +122,26 @@ function renderChart(products) {
     type: "bar",
     data: chartData,
     options: {
-      indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (context) => `${formatCount(context.parsed.x)} units sold`,
+            label: (context) => `${formatCount(context.parsed.y)} units sold`,
           },
         },
       },
       scales: {
         x: {
-          beginAtZero: true,
-          ticks: { precision: 0, color: "#78867d" },
-          grid: { color: "#edf1ec" },
+          ticks: { color: "#4e5d53", maxRotation: 45, minRotation: 0 },
+          grid: { display: false },
           border: { display: false },
         },
         y: {
-          ticks: { color: "#4e5d53" },
-          grid: { display: false },
+          beginAtZero: true,
+          ticks: { precision: 0, color: "#78867d" },
+          grid: { color: "#edf1ec" },
           border: { display: false },
         },
       },
