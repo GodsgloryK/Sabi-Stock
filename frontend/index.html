@@ -12,21 +12,23 @@
     <link rel="stylesheet" href="./css/styles.css" />
   </head>
   <body class="marketing-page">
-    <header class="site-header">
-      <a class="brand" href="./index.html" aria-label="Smart-Stock home">
-        <span class="brand__mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" fill="none">
-            <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
-            <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
-            <path d="m11 7 11 5.6" />
-          </svg>
-        </span>
-        <span>Smart<span class="brand__accent">-Stock</span></span>
-      </a>
-      <nav class="site-nav" aria-label="Main navigation">
-        <a class="text-link" href="./login.html">Login</a>
-        <a class="button button--small" href="./register.html">Get Started</a>
-      </nav>
+    <header class="site-header site-header--centered">
+      <div class="site-header__inner">
+        <a class="brand site-header__brand" href="./index.html" aria-label="Smart-Stock home">
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+              <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+              <path d="m11 7 11 5.6" />
+            </svg>
+          </span>
+          <span>Smart<span class="brand__accent">-Stock</span></span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a class="text-link" href="./login.html">Login</a>
+          <a class="button button--small" href="./register.html">Get Started</a>
+        </nav>
+      </div>
     </header>
 
     <main>
@@ -50,10 +52,23 @@
         </div>
 
         <div class="hero-art">
-          <div class="art-tag art-tag--top" aria-hidden="true"><span class="art-tag__icon">✓</span> In one place</div>
-          <div class="art-tag art-tag--bottom" aria-hidden="true"><span class="art-tag__dot"></span> Ready for your business</div>
-          <div class="art-spark art-spark--one" aria-hidden="true"></div>
-          <div class="art-spark art-spark--two" aria-hidden="true"></div>
+          <div class="hero-art__frame">
+            <img
+              src="./images/smart-stock-workspace.jpg"
+              alt="Workspace with a laptop, notebook, and plant showing the Smart-Stock inventory dashboard"
+              loading="lazy"
+              width="1280"
+              height="853"
+            />
+          </div>
+          <span class="art-tag art-tag--top" aria-hidden="true">
+            <span class="art-tag__icon">✓</span> In one place
+          </span>
+          <span class="art-tag art-tag--bottom" aria-hidden="true">
+            <span class="art-tag__dot"></span> Ready for your business
+          </span>
+          <span class="art-spark art-spark--one" aria-hidden="true"></span>
+          <span class="art-spark art-spark--two" aria-hidden="true"></span>
         </div>
       </section>
 
