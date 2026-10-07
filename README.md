@@ -49,6 +49,6 @@ For an existing database, apply migrations in order: `backend/app/db/migrations/
 ## Deploy
 
 - **Render:** create a Blueprint service from `render.yaml`. Set `DATABASE_URL` to the Neon connection string, `FRONTEND_ORIGINS` to the deployed frontend origin, and `JWT_SECRET_KEY` to a random secret of at least 32 characters in the Render environment.
-- **Vercel:** import the repository and set the project Root Directory to `frontend`. The frontend is static and requires no build step, so the committed `frontend/js/config.js` is used as-is. If you instead build from the repository root, `vercel.json` runs `scripts/build_frontend_config.js`, which rewrites `frontend/js/config.js` from the `API_BASE_URL` environment variable when it is set (and leaves the committed value alone when it is not).
+- **Vercel:** import the repository and leave the project Root Directory empty (the repository root). `vercel.json` runs `scripts/build_frontend_config.js`, which rewrites `frontend/js/config.js` from the `API_BASE_URL` environment variable when it is set (and leaves the committed value alone when it is not), then serves the static site from `frontend/`. Do not set the Root Directory to `frontend`: the build script and `vercel.json` paths are resolved from the repository root, and a `frontend` Root Directory makes the build fail with `Cannot find module .../frontend/scripts/build_frontend_config.js`.
 
 For local frontend development, serve `frontend/` with any static file server and set `apiBaseUrl` in `frontend/js/config.js` to `http://127.0.0.1:8000`.
