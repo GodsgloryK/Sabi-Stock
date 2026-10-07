@@ -166,7 +166,7 @@ def delete_product(product_id: UUID, current_user: CurrentUser) -> Response:
                     (product_id, current_user.business_id),
                 )
                 deleted = cursor.rowcount
-    except psycopg.errors.ForeignKeyViolation as exc:
+    except psycopg.errors.IntegrityError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="This product has sales recorded and cannot be deleted.",

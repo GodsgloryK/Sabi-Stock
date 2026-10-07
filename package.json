@@ -1,0 +1,12 @@
+{
+  "name": "sabi-stock",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static frontend build helpers for Sabi-Stock.",
+  "scripts": {
+    "build": "node scripts/build_frontend_config.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

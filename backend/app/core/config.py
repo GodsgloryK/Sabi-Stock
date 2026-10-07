@@ -8,7 +8,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
     database_url: str | None = None
-    frontend_origins: str = "http://localhost:5500,http://127.0.0.1:5500"
+    frontend_origins: str = "https://sabi-stock-frontend.vercel.app/"
     jwt_secret_key: str | None = None
     jwt_expire_minutes: int = Field(default=60, gt=0)
 

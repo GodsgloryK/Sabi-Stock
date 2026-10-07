@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sabi-stock-api
+    name: sabi-stock-1
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
