@@ -240,7 +240,7 @@ def login(request: LoginRequest) -> AuthResponse:
 
 @router.get("/me", response_model=CurrentUserResponse)
 def get_me(current_user: CurrentUser) -> CurrentUserResponse:
-    return CurrentUserResponse.model_validate(current_user)
+    return CurrentUserResponse.model_validate(current_user.model_dump())
 
 
 @router.post(
