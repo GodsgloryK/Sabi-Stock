@@ -10,7 +10,9 @@ const pageMessage = document.querySelector("[data-page-message]");
 const productCount = document.querySelector("[data-product-count]");
 const categoryFilter = document.querySelector("[data-category-filter]");
 const searchInput = document.querySelector("[data-search]");
+const exportProductsButton = document.querySelector("[data-export-products]");
 
+const LOW_STOCK_THRESHOLD = 5;
 let products = [];
 let editingProductId = null;
 
@@ -68,8 +70,18 @@ async function apiRequest(path, options = {}) {
 function formatPrice(value) {
   const price = Number(value);
   return Number.isFinite(price)
-    ? price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    ? `₦${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : "—";
+}
+
+function stockBadge(quantity) {
+  if (quantity === 0) {
+    return `<span class="stock-value">${quantity}</span><span class="stock-badge stock-badge--out">Out</span>`;
+  }
+  if (quantity < LOW_STOCK_THRESHOLD) {
+    return `<span class="stock-value">${quantity}</span><span class="stock-badge stock-badge--low">Low</span>`;
+  }
+  return `<span class="stock-value">${quantity}</span>`;
 }
 
 function escapeHtml(value) {
@@ -120,7 +132,7 @@ function renderProducts() {
       <td data-label="Category"><span class="category-badge">${escapeHtml(product.category)}</span></td>
       <td data-label="Buying price">${formatPrice(product.buying_price)}</td>
       <td data-label="Selling price">${formatPrice(product.selling_price)}</td>
-      <td data-label="Stock quantity"><span class="stock-value">${product.stock_quantity}</span></td>
+      <td data-label="Stock quantity">${stockBadge(product.stock_quantity)}</td>
       <td data-label="Actions" class="products-table__actions">
         <button class="table-action" type="button" data-edit-product="${escapeHtml(product.id)}">Edit</button>
         <button class="table-action table-action--delete" type="button" data-delete-product="${escapeHtml(product.id)}">Delete</button>
@@ -253,6 +265,40 @@ document.querySelector("[data-add-product]").addEventListener("click", openCreat
 document.querySelectorAll("[data-cancel-form]").forEach((button) => {
   button.addEventListener("click", closeForm);
 });
+
+exportProductsButton.addEventListener("click", async () => {
+  clearMessage();
+  exportProductsButton.disabled = true;
+  const originalLabel = exportProductsButton.textContent;
+  exportProductsButton.textContent = "Preparing…";
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/reports/export/products.csv`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+      throw new Error(
+        typeof payload?.detail === "string"
+          ? payload.detail
+          : "The export could not be prepared. Please try again.",
+      );
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "smart-stock-products.csv";
+    document.body.add(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    showMessage(error.message);
+  } finally {
+    exportProductsButton.disabled = false;
+    exportProductsButton.textContent = originalLabel;
+  }
+});
 document.querySelector("[data-logout]").addEventListener("click", () => {
   sessionStorage.removeItem(TOKEN_STORAGE_KEY);
   window.location.replace("./login.html");
@@ -279,6 +325,9 @@ async function initializeProductsPage() {
   try {
     const user = await apiRequest("/auth/me");
     document.querySelector("[data-business-identity]").textContent = `${user.full_name} · ${user.business_name}`;
+    if (user.role === "owner") {
+      document.querySelectorAll("[data-owner-only]").forEach((element) => { element.hidden = false; });
+    }
     await loadProducts();
   } catch (error) {
     showMessage(error.message);

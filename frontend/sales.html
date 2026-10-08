@@ -26,6 +26,7 @@
         <a class="dashboard-nav__link" href="./dashboard.html">Dashboard</a>
         <a class="dashboard-nav__link" href="./products.html">Products</a>
         <a class="dashboard-nav__link dashboard-nav__link--active" href="./sales.html" aria-current="page">Sales</a>
+        <a class="dashboard-nav__link" href="./team.html" data-owner-only hidden>Team</a>
       </nav>
       <div class="products-header__right">
         <p class="business-identity" data-business-identity>Loading account…</p>
@@ -72,11 +73,62 @@
 
       <div class="form-message product-page-message" role="alert" aria-live="polite" data-sales-message hidden></div>
 
+      <section class="dashboard-metrics" aria-label="Sales summary">
+        <article class="metric-card">
+          <div class="metric-card__top">
+            <span class="metric-card__label">Revenue</span>
+            <span class="metric-icon metric-icon--sales" aria-hidden="true">↗</span>
+          </div>
+          <p class="metric-card__value" data-summary-revenue>—</p>
+          <p class="metric-card__note">Total sales amount</p>
+        </article>
+        <article class="metric-card metric-card--highlight">
+          <div class="metric-card__top">
+            <span class="metric-card__label">Profit</span>
+            <span class="metric-icon metric-icon--profit" aria-hidden="true">✳</span>
+          </div>
+          <p class="metric-card__value" data-summary-profit>—</p>
+          <p class="metric-card__note">Profit from these sales</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-card__top">
+            <span class="metric-card__label">Units sold</span>
+            <span class="metric-icon metric-icon--stock" aria-hidden="true">▤</span>
+          </div>
+          <p class="metric-card__value" data-summary-units>—</p>
+          <p class="metric-card__note">Total quantity sold</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-card__top">
+            <span class="metric-card__label">Number of sales</span>
+            <span class="metric-icon metric-icon--products" aria-hidden="true">▦</span>
+          </div>
+          <p class="metric-card__value" data-summary-count>—</p>
+          <p class="metric-card__note">Sales in the selected range</p>
+        </article>
+      </section>
+
       <section class="products-card sales-history-card" aria-labelledby="sales-history-title">
         <div class="products-card__top">
           <div>
             <h2 id="sales-history-title">Sales history</h2>
             <p data-sales-count>Loading sales…</p>
+          </div>
+          <div class="product-filters">
+            <label class="form-field form-field--inline">
+              <span class="form-field__label">From</span>
+              <input type="date" data-filter-from />
+            </label>
+            <label class="form-field form-field--inline">
+              <span class="form-field__label">To</span>
+              <input type="date" data-filter-to />
+            </label>
+            <label class="visually-hidden" for="sale-product-filter">Filter by product</label>
+            <select id="sale-product-filter" class="category-filter" data-filter-product>
+              <option value="">All products</option>
+            </select>
+            <button class="button button--secondary button--small" type="button" data-clear-filters>Clear</button>
+            <button class="button button--secondary button--small" type="button" data-export-csv>Export CSV</button>
           </div>
         </div>
         <div class="products-table-wrap">
@@ -95,6 +147,9 @@
               <tr><td class="products-table__status" colspan="6">Loading your sales…</td></tr>
             </tbody>
           </table>
+        </div>
+        <div class="sales-load-more" data-load-more-wrap hidden>
+          <button class="button button--secondary" type="button" data-load-more>Load more sales</button>
         </div>
       </section>
       <a class="products-back-link" href="./dashboard.html">← Back to workspace</a>

@@ -69,5 +69,21 @@ class InvitationResponse(BaseModel):
     expires_at: datetime
 
 
+class TeamMemberResponse(BaseModel):
+    id: UUID
+    full_name: str
+    email: EmailStr
+    role: str
+    joined_at: datetime
+
+
+class InvitationStatusResponse(BaseModel):
+    id: UUID
+    status: str
+    expires_at: datetime
+    used_at: datetime | None
+    created_at: datetime
+
+
 class CurrentUserResponse(UserResponse):
     pass

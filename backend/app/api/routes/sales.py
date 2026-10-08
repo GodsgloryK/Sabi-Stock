@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
 
@@ -7,7 +8,7 @@ from psycopg.rows import dict_row
 
 from app.api.dependencies import CurrentUser
 from app.db.connection import get_connection
-from app.schemas.sales import SaleCreate, SaleResponse
+from app.schemas.sales import SaleCreate, SaleResponse, SalesSummaryResponse
 
 router = APIRouter()
 
@@ -105,32 +106,100 @@ def record_sale(request: SaleCreate, current_user: CurrentUser) -> SaleResponse:
     return SaleResponse.model_validate(sale)
 
 
+def _build_sales_filters(
+    business_id: UUID,
+    date_from: date | None,
+    date_to: date | None,
+    product_id: UUID | None,
+) -> tuple[str, list]:
+    conditions = ["s.business_id = %s"]
+    parameters: list = [business_id]
+    if date_from is not None:
+        conditions.append("s.created_at >= %s::timestamptz")
+        parameters.append(date_from.isoformat())
+    if date_to is not None:
+        day_after = date_to + timedelta(days=1)
+        conditions.append("s.created_at < %s::timestamptz")
+        parameters.append(day_after.isoformat())
+    if product_id is not None:
+        conditions.append("s.product_id = %s")
+        parameters.append(product_id)
+    return " AND ".join(conditions), parameters
+
+
 @router.get("", response_model=list[SaleResponse])
 def list_sales(
     current_user: CurrentUser,
+    response: Response,
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
+    date_from: date | None = None,
+    date_to: date | None = None,
+    product_id: UUID | None = None,
 ) -> list[SaleResponse]:
+    where_clause, parameters = _build_sales_filters(
+        current_user.business_id, date_from, date_to, product_id
+    )
     try:
         with get_connection() as connection:
             with connection.cursor(row_factory=dict_row) as cursor:
+                total_row = cursor.execute(
+                    f"""
+                    SELECT count(*)::bigint AS total
+                    FROM sales AS s
+                    WHERE {where_clause}
+                    """,
+                    tuple(parameters),
+                ).fetchone()
                 sales = cursor.execute(
-                    """
+                    f"""
                     SELECT s.id, s.business_id, s.product_id, p.name AS product_name,
                            s.quantity, s.selling_price, s.buying_price, s.profit,
                            s.total_amount, s.created_at
                     FROM sales AS s
                     JOIN products AS p ON p.id = s.product_id
-                    WHERE s.business_id = %s
+                    WHERE {where_clause}
                     ORDER BY s.created_at DESC, s.id DESC
                     LIMIT %s OFFSET %s
                     """,
-                    (current_user.business_id, limit, offset),
+                    (*parameters, limit, offset),
                 ).fetchall()
     except (psycopg.Error, RuntimeError) as exc:
         raise _database_unavailable(exc) from exc
 
+    response.headers["X-Total-Count"] = str(total_row["total"])
     return [SaleResponse.model_validate(sale) for sale in sales]
+
+
+@router.get("/summary", response_model=SalesSummaryResponse)
+def get_sales_summary(
+    current_user: CurrentUser,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    product_id: UUID | None = None,
+) -> SalesSummaryResponse:
+    where_clause, parameters = _build_sales_filters(
+        current_user.business_id, date_from, date_to, product_id
+    )
+    try:
+        with get_connection() as connection:
+            with connection.cursor(row_factory=dict_row) as cursor:
+                summary = cursor.execute(
+                    f"""
+                    SELECT
+                        COALESCE(sum(s.total_amount), 0) AS total_amount,
+                        COALESCE(sum(s.profit), 0) AS total_profit,
+                        COALESCE(sum(s.quantity), 0)::bigint AS total_units,
+                        count(*)::integer AS sale_count
+                    FROM sales AS s
+                    WHERE {where_clause}
+                    """,
+                    tuple(parameters),
+                ).fetchone()
+    except (psycopg.Error, RuntimeError) as exc:
+        raise _database_unavailable(exc) from exc
+
+    return SalesSummaryResponse(**summary)
 
 
 @router.get("/{sale_id}", response_model=SaleResponse)

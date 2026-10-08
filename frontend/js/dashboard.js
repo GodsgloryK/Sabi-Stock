@@ -8,7 +8,9 @@ const messageElement = document.querySelector("[data-dashboard-message]");
 const refreshButton = document.querySelector("[data-refresh]");
 const refreshLabel = document.querySelector("[data-refresh-label]");
 const chartEmpty = document.querySelector("[data-chart-empty]");
+const trendChartEmpty = document.querySelector("[data-trend-chart-empty]");
 let topProductsChart = null;
+let trendChart = null;
 let refreshTimer = null;
 
 function returnToLogin() {
@@ -33,11 +35,11 @@ function formatCount(value) {
 function formatAmount(value) {
   const amount = Number(value);
   return Number.isFinite(amount)
-    ? amount.toLocaleString(undefined, {
+    ? `₦${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    })
-    : "0.00";
+    })}`
+    : "₦0.00";
 }
 
 function escapeHtml(value) {
@@ -50,10 +52,10 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function renderLowStock(products) {
+function renderLowStock(products, threshold) {
   const list = document.querySelector("[data-low-stock-list]");
   if (products.length === 0) {
-    list.innerHTML = '<p class="panel-empty-inline">All products have at least 5 units in stock.</p>';
+    list.innerHTML = `<p class="panel-empty-inline">All products have at least ${threshold} units in stock.</p>`;
     return;
   }
 
@@ -149,12 +151,95 @@ function renderChart(products) {
   });
 }
 
+function renderTrendChart(points, days) {
+  const canvas = document.querySelector("#sales-trend-chart");
+  trendChartEmpty.hidden = points.length > 0;
+  canvas.hidden = points.length === 0;
+  if (points.length === 0) {
+    trendChart?.destroy();
+    trendChart = null;
+    return;
+  }
+  if (typeof window.Chart !== "function") {
+    trendChartEmpty.textContent = "The chart could not load. Sales data is unavailable.";
+    trendChartEmpty.hidden = false;
+    return;
+  }
+
+  const chartData = {
+    labels: points.map((point) => point.day),
+    datasets: [
+      {
+        label: "Revenue",
+        data: points.map((point) => Number(point.total_amount)),
+        borderColor: "#19764f",
+        backgroundColor: "rgb(25 118 79 / 12%)",
+        fill: true,
+        tension: 0.3,
+        pointRadius: 2,
+        pointHoverRadius: 5,
+      },
+      {
+        label: "Profit",
+        data: points.map((point) => Number(point.profit)),
+        borderColor: "#67a17b",
+        backgroundColor: "rgb(103 161 123 / 8%)",
+        fill: false,
+        tension: 0.3,
+        pointRadius: 2,
+        pointHoverRadius: 5,
+      },
+    ],
+  };
+
+  if (trendChart) {
+    trendChart.data = chartData;
+    trendChart.update();
+    return;
+  }
+
+  trendChart = new window.Chart(canvas, {
+    type: "line",
+    data: chartData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom",
+          labels: { color: "#4e5d53", boxWidth: 12, font: { size: 11 } },
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => `${context.dataset.label}: ${formatAmount(context.parsed.y)}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: "#4e5d53", maxTicksLimit: 10, maxRotation: 0 },
+          grid: { display: false },
+          border: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: "#78867d", callback: (value) => formatAmount(value) },
+          grid: { color: "#edf1ec" },
+          border: { display: false },
+        },
+      },
+    },
+  });
+}
+
 function renderDashboard(data) {
   document.querySelector("[data-total-products]").textContent = formatCount(data.total_products);
   document.querySelector("[data-total-stock]").textContent = formatCount(data.total_stock_quantity);
   document.querySelector("[data-today-sales]").textContent = formatAmount(data.today_total_sales);
   document.querySelector("[data-today-profit]").textContent = formatAmount(data.today_total_profit);
-  renderLowStock(data.low_stock_products);
+  document.querySelector("[data-low-stock-threshold-note]").textContent = `Products with fewer than ${data.low_stock_threshold} units`;
+  renderLowStock(data.low_stock_products, data.low_stock_threshold);
   renderTopProducts(data.top_selling_products);
   renderChart(data.top_selling_products);
   document.querySelector("[data-last-updated]").textContent = `Updated ${new Intl.DateTimeFormat(
@@ -194,13 +279,18 @@ async function refreshDashboard({ loadIdentity = false } = {}) {
   refreshLabel.textContent = "Refreshing…";
   try {
     const dashboardPromise = requestJson("/dashboard");
+    const trendsPromise = requestJson("/dashboard/trends?days=30");
     const identityPromise = loadIdentity ? requestJson("/auth/me") : Promise.resolve(null);
-    const [data, user] = await Promise.all([dashboardPromise, identityPromise]);
+    const [data, trends, user] = await Promise.all([dashboardPromise, trendsPromise, identityPromise]);
     if (user) {
       document.querySelector("[data-user-identity]").textContent = `${user.full_name} · ${user.business_name}`;
       document.querySelector("[data-avatar]").textContent = user.full_name.trim().charAt(0).toLocaleUpperCase();
+      if (user.role === "owner") {
+        document.querySelectorAll("[data-owner-only]").forEach((element) => { element.hidden = false; });
+      }
     }
     renderDashboard(data);
+    renderTrendChart(trends.points, trends.days);
   } catch (error) {
     showMessage(error instanceof Error ? error.message : "Dashboard data could not be loaded.");
   } finally {

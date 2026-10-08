@@ -1,8 +1,10 @@
+from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 import jwt
 import psycopg
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from psycopg.rows import dict_row
 
 from app.api.dependencies import BusinessOwner, CurrentUser
@@ -19,13 +21,41 @@ from app.schemas.auth import (
     AuthResponse,
     CurrentUserResponse,
     InvitationResponse,
+    InvitationStatusResponse,
     LoginRequest,
     ManagerRegistration,
     OwnerRegistration,
+    TeamMemberResponse,
     UserResponse,
 )
 
 router = APIRouter()
+
+LOGIN_RATE_LIMIT = 5
+LOGIN_RATE_WINDOW_SECONDS = 900
+_login_attempts: dict[str, deque] = defaultdict(deque)
+
+
+def _client_key(request: Request, email: str) -> str:
+    client_host = request.client.host if request.client else "unknown"
+    return f"{client_host}:{email.lower()}"
+
+
+def _is_login_rate_limited(key: str) -> bool:
+    now = datetime.now(timezone.utc)
+    window_start = now - timedelta(seconds=LOGIN_RATE_WINDOW_SECONDS)
+    attempts = _login_attempts[key]
+    while attempts and attempts[0] < window_start:
+        attempts.popleft()
+    return len(attempts) >= LOGIN_RATE_LIMIT
+
+
+def _record_login_failure(key: str) -> None:
+    _login_attempts[key].append(datetime.now(timezone.utc))
+
+
+def _clear_login_failures(key: str) -> None:
+    _login_attempts.pop(key, None)
 
 
 def _ensure_jwt_configured() -> None:
@@ -197,8 +227,15 @@ def register_manager(request: ManagerRegistration) -> AuthResponse:
     "/login",
     response_model=AuthResponse,
 )
-def login(request: LoginRequest) -> AuthResponse:
+def login(request: LoginRequest, http_request: Request) -> AuthResponse:
     _ensure_jwt_configured()
+    rate_key = _client_key(http_request, request.email)
+
+    if _is_login_rate_limited(rate_key):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Please wait a few minutes and try again.",
+        )
 
     try:
         with get_connection() as connection:
@@ -221,12 +258,14 @@ def login(request: LoginRequest) -> AuthResponse:
         ) from exc
 
     if result is None or not verify_password(request.password, result["password_hash"]):
+        _record_login_failure(rate_key)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    _clear_login_failures(rate_key)
     response_user = UserResponse(
         id=result["id"],
         full_name=result["full_name"],
@@ -277,3 +316,168 @@ def create_invitation(owner: BusinessOwner) -> InvitationResponse:
         invitation_code=invitation_code,
         expires_at=expires_at,
     )
+
+
+@router.get("/members", response_model=list[TeamMemberResponse])
+def list_members(owner: BusinessOwner) -> list[TeamMemberResponse]:
+    try:
+        with get_connection() as connection:
+            with connection.cursor(row_factory=dict_row) as cursor:
+                members = cursor.execute(
+                    """
+                    SELECT u.id, u.full_name, u.email, m.role, m.created_at
+                    FROM business_memberships AS m
+                    JOIN users AS u ON u.id = m.user_id
+                    WHERE m.business_id = %s
+                    ORDER BY
+                        CASE m.role WHEN 'owner' THEN 0 ELSE 1 END,
+                        lower(u.full_name),
+                        u.id
+                    """,
+                    (owner.business_id,),
+                ).fetchall()
+    except (psycopg.Error, RuntimeError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database is unavailable.",
+        ) from exc
+
+    return [
+        TeamMemberResponse(
+            id=member["id"],
+            full_name=member["full_name"],
+            email=member["email"],
+            role=member["role"],
+            joined_at=member["created_at"],
+        )
+        for member in members
+    ]
+
+
+@router.delete("/members/{member_user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_member(member_user_id: UUID, owner: BusinessOwner) -> None:
+    if member_user_id == owner.id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You cannot remove your own owner account.",
+        )
+
+    try:
+        with get_connection() as connection:
+            with connection.cursor(row_factory=dict_row) as cursor:
+                membership = cursor.execute(
+                    """
+                    SELECT user_id, role
+                    FROM business_memberships
+                    WHERE user_id = %s AND business_id = %s
+                    FOR UPDATE
+                    """,
+                    (member_user_id, owner.business_id),
+                ).fetchone()
+                if membership is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Team member not found.",
+                    )
+                if membership["role"] == "owner":
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Owners cannot be removed. Transfer ownership first.",
+                    )
+                cursor.execute(
+                    """
+                    DELETE FROM business_memberships
+                    WHERE user_id = %s AND business_id = %s
+                    """,
+                    (member_user_id, owner.business_id),
+                )
+    except HTTPException:
+        raise
+    except (psycopg.Error, RuntimeError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database is unavailable.",
+        ) from exc
+
+
+@router.get("/invitations/list", response_model=list[InvitationStatusResponse])
+def list_invitations(owner: BusinessOwner) -> list[InvitationStatusResponse]:
+    try:
+        with get_connection() as connection:
+            with connection.cursor(row_factory=dict_row) as cursor:
+                rows = cursor.execute(
+                    """
+                    SELECT id, expires_at, used_at, created_at
+                    FROM business_invitations
+                    WHERE business_id = %s
+                    ORDER BY created_at DESC
+                    LIMIT 50
+                    """,
+                    (owner.business_id,),
+                ).fetchall()
+    except (psycopg.Error, RuntimeError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database is unavailable.",
+        ) from exc
+
+    now = datetime.now(timezone.utc)
+    invitations = []
+    for row in rows:
+        if row["used_at"] is not None:
+            invitation_status = "used"
+        elif row["expires_at"] <= now:
+            invitation_status = "expired"
+        else:
+            invitation_status = "pending"
+        invitations.append(
+            InvitationStatusResponse(
+                id=row["id"],
+                status=invitation_status,
+                expires_at=row["expires_at"],
+                used_at=row["used_at"],
+                created_at=row["created_at"],
+            )
+        )
+    return invitations
+
+
+@router.delete("/invitations/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_invitation(invitation_id: UUID, owner: BusinessOwner) -> None:
+    try:
+        with get_connection() as connection:
+            with connection.cursor(row_factory=dict_row) as cursor:
+                invitation = cursor.execute(
+                    """
+                    SELECT id, used_at
+                    FROM business_invitations
+                    WHERE id = %s AND business_id = %s
+                    FOR UPDATE
+                    """,
+                    (invitation_id, owner.business_id),
+                ).fetchone()
+                if invitation is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Invitation not found.",
+                    )
+                if invitation["used_at"] is not None:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="This invitation has already been used.",
+                    )
+                cursor.execute(
+                    """
+                    UPDATE business_invitations
+                    SET used_at = now()
+                    WHERE id = %s
+                    """,
+                    (invitation_id,),
+                )
+    except HTTPException:
+        raise
+    except (psycopg.Error, RuntimeError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database is unavailable.",
+        ) from exc

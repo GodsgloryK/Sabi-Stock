@@ -1,10 +1,10 @@
 import unittest
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
 
 from app.api.dependencies import get_current_user
 from app.api.routes import sales as sales_route
@@ -138,15 +138,65 @@ class SalesApiTests(unittest.TestCase):
 
     def test_list_sales_is_business_scoped(self) -> None:
         cursor, context = self.database_mocks()
+        cursor.fetchone.return_value = {"total": 1}
         cursor.fetchall.return_value = [SALE]
+        http_response = Response()
 
         with patch.object(sales_route, "get_connection", return_value=context):
-            response = sales_route.list_sales(USER, limit=20, offset=10)
+            sales = sales_route.list_sales(USER, http_response, limit=20, offset=10)
 
-        self.assertEqual(len(response), 1)
+        self.assertEqual(len(sales), 1)
+        self.assertEqual(http_response.headers["X-Total-Count"], "1")
+        count_query, count_parameters = cursor.execute.call_args_list[0].args
+        self.assertIn("WHERE s.business_id = %s", count_query)
+        self.assertEqual(count_parameters, (BUSINESS_ID,))
+        list_query, list_parameters = cursor.execute.call_args_list[1].args
+        self.assertIn("WHERE s.business_id = %s", list_query)
+        self.assertEqual(list_parameters, (BUSINESS_ID, 20, 10))
+
+    def test_list_sales_applies_date_and_product_filters(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchone.return_value = {"total": 0}
+        cursor.fetchall.return_value = []
+        http_response = Response()
+
+        with patch.object(sales_route, "get_connection", return_value=context):
+            sales_route.list_sales(
+                USER,
+                http_response,
+                limit=100,
+                offset=0,
+                date_from=date(2026, 1, 1),
+                date_to=date(2026, 1, 31),
+                product_id=PRODUCT_ID,
+            )
+
+        list_query, list_parameters = cursor.execute.call_args_list[1].args
+        self.assertIn("s.created_at >= %s::timestamptz", list_query)
+        self.assertIn("s.created_at < %s::timestamptz", list_query)
+        self.assertIn("s.product_id = %s", list_query)
+        self.assertEqual(
+            list_parameters,
+            (BUSINESS_ID, "2026-01-01", "2026-02-01", PRODUCT_ID, 100, 0),
+        )
+
+    def test_sales_summary_aggregates_within_filters(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchone.return_value = {
+            "total_amount": Decimal("150.00"),
+            "total_profit": Decimal("60.00"),
+            "total_units": 10,
+            "sale_count": 4,
+        }
+
+        with patch.object(sales_route, "get_connection", return_value=context):
+            summary = sales_route.get_sales_summary(USER, date_from=date(2026, 3, 1))
+
+        self.assertEqual(summary.total_units, 10)
+        self.assertEqual(summary.sale_count, 4)
         query, parameters = cursor.execute.call_args.args
-        self.assertIn("WHERE s.business_id = %s", query)
-        self.assertEqual(parameters, (BUSINESS_ID, 20, 10))
+        self.assertIn("WHERE s.business_id = %s AND s.created_at >= %s::timestamptz", query)
+        self.assertEqual(parameters, (BUSINESS_ID, "2026-03-01"))
 
     def test_get_sale_is_business_scoped(self) -> None:
         cursor, context = self.database_mocks()

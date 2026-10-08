@@ -1,10 +1,10 @@
 # Sabi-Stock
 
-Initial foundation for a multi-business inventory management application, including owner/manager authentication and business membership scoping.
+Multi-business inventory and sales management application with owner/stock-manager authentication, product catalogue, inventory tracking, sales recording, low-stock alerts, team invitations, and CSV export.
 
 ## Project layout
 
-- `frontend/` — static HTML, CSS, and vanilla JavaScript landing, registration, and login pages
+- `frontend/` — static HTML, CSS, and vanilla JavaScript pages (landing, auth, dashboard, products, sales, team)
 - `backend/` — FastAPI application and PostgreSQL connection layer
 
 ## Run the backend locally
@@ -18,33 +18,73 @@ Apply `backend/app/db/schema.sql` to the Neon database before using the API (for
 
 The readiness endpoint is available at `http://127.0.0.1:8000/api/health`. It checks the PostgreSQL connection and returns `503` if the database is not configured or unavailable.
 
-## Authentication API
+## API
+
+### Authentication & team
 
 - `POST /api/auth/register/owner` — create an owner account and business.
-- `POST /api/auth/login` — validate credentials and return a bearer token.
-- `POST /api/auth/invitations` — owner-only; create a manager invitation that expires after 24 hours. The plaintext code is returned once.
-- `POST /api/auth/register/manager` — create a manager account using an invitation code.
+- `POST /api/auth/login` — validate credentials and return a bearer token. Rate-limited to 5 failed attempts per email/IP every 15 minutes (`429` on excess).
+- `POST /api/auth/invitations` — owner-only; create a stock manager invitation that expires after 24 hours. The plaintext code is returned once.
+- `POST /api/auth/register/manager` — create a stock manager account using an invitation code.
 - `GET /api/auth/me` — return the authenticated user and their business context.
+- `GET /api/auth/members` — owner-only; list team members with roles.
+- `DELETE /api/auth/members/{user_id}` — owner-only; remove a stock manager. Owners cannot be removed or remove themselves.
+- `GET /api/auth/invitations/list` — owner-only; list recent invitations with computed status (pending/used/expired).
+- `DELETE /api/auth/invitations/{invitation_id}` — owner-only; revoke a pending invitation.
+
+### Products
+
 - `POST /api/products` — create a product for the authenticated user's business.
 - `GET /api/products` — list products, optionally filtered by `search` and `category`.
 - `GET /api/products/{product_id}` — read one product from the authenticated user's business.
 - `PUT /api/products/{product_id}` — update a product in the authenticated user's business.
-- `DELETE /api/products/{product_id}` — delete a product in the authenticated user's business.
+- `DELETE /api/products/{product_id}` — delete a product (blocked with `409` if sales exist).
+
+### Sales
+
 - `POST /api/sales` — record a sale and atomically reduce the product stock.
-- `GET /api/sales` — list the authenticated business's sales (`limit` and `offset` supported).
+- `GET /api/sales` — list sales; supports `limit`, `offset`, `date_from`, `date_to`, and `product_id` filters. Returns `X-Total-Count` for pagination.
+- `GET /api/sales/summary` — aggregated revenue, profit, units, and sale count for the same filters.
 - `GET /api/sales/{sale_id}` — read one sale from the authenticated business.
 - `DELETE /api/sales/{sale_id}` — void a sale and atomically return its quantity to product stock.
-- `GET /api/dashboard` — return business-scoped product/stock totals, today's database-date sales and profit, low-stock products, and the top 5 products ranked by quantity sold.
 
-Send authenticated requests with `Authorization: Bearer <access_token>`. Access tokens expire after `JWT_EXPIRE_MINUTES` (60 by default). User membership is rechecked against PostgreSQL for authenticated requests, so removed membership immediately loses access. Future business-owned tables should include a non-null `business_id` foreign key and all queries should scope through the authenticated user's `business_id`.
+### Dashboard
 
-## Frontend authentication
+- `GET /api/dashboard` — business-scoped product/stock totals, today's sales and profit (computed in the business's timezone), low-stock products (using the business's configurable threshold), and the top 5 products by quantity sold.
+- `GET /api/dashboard/trends?days=30` — daily revenue/profit/units buckets for the last N days (1–90).
 
-The static frontend pages are `frontend/index.html`, `frontend/register.html`, and `frontend/login.html`. Owner registration and login submit directly to the FastAPI API. Set `apiBaseUrl` in `frontend/js/config.js` to the deployed API origin before deployment; the committed value points at the deployed Render API (`https://sabi-stock-1.onrender.com`). The returned token is held in `sessionStorage` for this course project, so it is cleared when the browser tab session ends. `frontend/dashboard.html`, `frontend/products.html`, and `frontend/sales.html` are protected pages with shared Dashboard / Products / Sales navigation, account context, and logout. Products provides creation, listing, editing, deletion, search, and category filtering. Sales selects from live product stock, records sales, and shows sales history. Voiding a sale restores its stock inside the same database transaction; products with sales cannot be deleted until those sales are voided. The dashboard refreshes live aggregate metrics from the authenticated dashboard endpoint and uses Chart.js via CDN for best sellers. Authenticated pages include loading, empty, and API error/success feedback states and adapt their navigation and content for smaller screens.
+### Reports
 
-Run the backend unit tests from `backend/` with `python -m unittest discover -s tests -v`.
+- `GET /api/reports/export/sales.csv` — CSV export of sales; supports `date_from`, `date_to`, and `product_id` filters.
+- `GET /api/reports/export/products.csv` — CSV export of the product catalogue.
 
-For an existing database, apply migrations in order: `backend/app/db/migrations/002_products.sql`, then `backend/app/db/migrations/003_sales.sql`. For a new database, the current `backend/app/db/schema.sql` includes the products and sales tables. Products with sales cannot be deleted; void sales first if the product needs to be removed.
+Send authenticated requests with `Authorization: Bearer <access_token>`. Access tokens expire after `JWT_EXPIRE_MINUTES` (60 by default). User membership is rechecked against PostgreSQL for authenticated requests, so removed membership immediately loses access. All business-owned tables include a non-null `business_id` and all queries scope through the authenticated user's `business_id`.
+
+## Frontend
+
+Protected pages share Dashboard / Products / Sales / Team navigation (Team is owner-only), account context, and logout:
+
+- `frontend/dashboard.html` — KPI cards, best-sellers bar chart, 30-day revenue/profit trend line chart, low-stock panel, auto-refresh every 60 seconds.
+- `frontend/products.html` — product CRUD, live search, category filter, low-stock/out-of-stock badges, CSV export.
+- `frontend/sales.html` — record sales from live stock, date-range and product filters, summary cards, paginated history with load-more, void & restock, CSV export.
+- `frontend/team.html` — owner-only; list members, invite stock managers with single-use codes, revoke invitations, remove members.
+
+`frontend/join.html` lets a stock manager create an account with an invitation code. The returned token is held in `sessionStorage`, so it is cleared when the browser tab session ends.
+
+## Migrations
+
+For a new database, apply `backend/app/db/schema.sql` (includes all tables). For existing databases, apply migrations in order:
+
+1. `001_auth.sql` — users, businesses, memberships, invitations
+2. `002_products.sql` — products
+3. `003_sales.sql` — sales
+4. `004_business_settings.sql` — `low_stock_threshold` and `timezone` columns on businesses
+
+Products with sales cannot be deleted; void sales first if the product needs to be removed.
+
+## Tests
+
+Run the backend unit tests from `backend/` with `python -m unittest discover -s tests -v`. CI runs these on every push and pull request via `.github/workflows/ci.yml`.
 
 ## Deploy
 

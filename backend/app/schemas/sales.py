@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -21,3 +21,10 @@ class SaleResponse(BaseModel):
     profit: Decimal
     total_amount: Decimal
     created_at: datetime
+
+
+class SalesSummaryResponse(BaseModel):
+    total_amount: Decimal
+    total_profit: Decimal
+    total_units: int
+    sale_count: int

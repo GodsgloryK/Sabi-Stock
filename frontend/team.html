@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Manage team members and invitations for your Smart-Stock business." />
+    <meta name="theme-color" content="#f6f8f5" />
+    <title>Team — Smart-Stock</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script src="./js/config.js" defer></script>
+    <script src="./js/team.js" defer></script>
+  </head>
+  <body class="products-page">
+    <header class="site-header products-header">
+      <a class="brand" href="./index.html" aria-label="Smart-Stock home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+            <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+            <path d="m11 7 11 5.6" />
+          </svg>
+        </span>
+        <span>Smart<span class="brand__accent">-Stock</span></span>
+      </a>
+      <nav class="dashboard-nav" aria-label="Workspace navigation">
+        <a class="dashboard-nav__link" href="./dashboard.html">Dashboard</a>
+        <a class="dashboard-nav__link" href="./products.html">Products</a>
+        <a class="dashboard-nav__link" href="./sales.html">Sales</a>
+        <a class="dashboard-nav__link dashboard-nav__link--active" href="./team.html" aria-current="page" data-owner-only hidden>Team</a>
+      </nav>
+      <div class="products-header__right">
+        <p class="business-identity" data-business-identity>Loading account…</p>
+        <button class="button button--secondary button--small" type="button" data-logout>Log out</button>
+      </div>
+    </header>
+
+    <main class="products-main">
+      <section class="products-title">
+        <div>
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Workspace access</p>
+          <h1>Team</h1>
+          <p class="products-title__description">Invite stock managers and control who can access your workspace.</p>
+        </div>
+        <button class="button" type="button" data-invite-button>
+          <span aria-hidden="true">＋</span> Invite stock manager
+        </button>
+      </section>
+
+      <div class="form-message product-page-message" role="alert" aria-live="polite" data-team-message hidden></div>
+
+      <section class="sale-form-card" data-invite-card hidden aria-labelledby="invite-card-title">
+        <div class="sale-form-card__heading">
+          <div>
+            <h2 id="invite-card-title">New invitation code</h2>
+            <p>Share this code with the person you want to invite. It expires in 24 hours and can only be used once.</p>
+          </div>
+          <button class="icon-button" type="button" data-close-invite aria-label="Close invitation panel">×</button>
+        </div>
+        <div class="invite-code-panel">
+          <p class="invite-code-panel__label">Invitation code</p>
+          <div class="invite-code-panel__row">
+            <code class="invite-code-panel__code" data-invitation-code>—</code>
+            <button class="button button--secondary button--small" type="button" data-copy-code>Copy code</button>
+          </div>
+          <p class="invite-code-panel__expiry" data-invitation-expiry></p>
+        </div>
+      </section>
+
+      <section class="products-card" aria-labelledby="members-list-title">
+        <div class="products-card__top">
+          <div>
+            <h2 id="members-list-title">Team members</h2>
+            <p data-members-count>Loading members…</p>
+          </div>
+        </div>
+        <div class="products-table-wrap">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Role</th>
+                <th scope="col">Joined</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody data-members-body>
+              <tr><td class="products-table__status" colspan="5">Loading team members…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="products-card" aria-labelledby="invitations-list-title">
+        <div class="products-card__top">
+          <div>
+            <h2 id="invitations-list-title">Invitations</h2>
+            <p data-invitations-count>Loading invitations…</p>
+          </div>
+        </div>
+        <div class="products-table-wrap">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th scope="col">Status</th>
+                <th scope="col">Created</th>
+                <th scope="col">Expires</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody data-invitations-body>
+              <tr><td class="products-table__status" colspan="4">Loading invitations…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <a class="products-back-link" href="./dashboard.html">← Back to workspace</a>
+    </main>
+  </body>
+</html>

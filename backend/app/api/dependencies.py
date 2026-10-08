@@ -72,7 +72,7 @@ def require_owner(current_user: CurrentUser) -> UserResponse:
     if current_user.role != "owner":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only business owners can create invitations.",
+            detail="Only business owners can perform this action.",
         )
     return current_user
 

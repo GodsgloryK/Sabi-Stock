@@ -43,12 +43,15 @@ class DashboardApiTests(unittest.TestCase):
 
     def test_dashboard_metrics_are_calculated_in_database_and_business_scoped(self) -> None:
         cursor, context = self.database_mocks()
-        cursor.fetchone.return_value = {
-            "total_products": 12,
-            "total_stock_quantity": 84,
-            "today_total_sales": Decimal("420.00"),
-            "today_total_profit": Decimal("96.50"),
-        }
+        cursor.fetchone.side_effect = [
+            {"low_stock_threshold": 5, "timezone": "Africa/Lagos"},
+            {
+                "total_products": 12,
+                "total_stock_quantity": 84,
+                "today_total_sales": Decimal("420.00"),
+                "today_total_profit": Decimal("96.50"),
+            },
+        ]
         cursor.fetchall.side_effect = [
             [
                 {
@@ -74,19 +77,23 @@ class DashboardApiTests(unittest.TestCase):
         self.assertEqual(response.total_stock_quantity, 84)
         self.assertEqual(response.today_total_sales, Decimal("420.00"))
         self.assertEqual(response.today_total_profit, Decimal("96.50"))
+        self.assertEqual(response.low_stock_threshold, 5)
         self.assertEqual(response.low_stock_products[0].stock_quantity, 4)
         self.assertEqual(response.top_selling_products[0].quantity_sold, 25)
 
         calls = cursor.execute.call_args_list
-        summary_query, summary_parameters = calls[0].args
-        self.assertIn("CURRENT_DATE", summary_query)
+        settings_query, settings_parameters = calls[0].args
+        self.assertIn("FROM businesses", settings_query)
+        self.assertEqual(settings_parameters, (BUSINESS_ID,))
+        summary_query, summary_parameters = calls[1].args
+        self.assertIn("now() AT TIME ZONE %s", summary_query)
         self.assertIn("sum(profit)", summary_query)
-        self.assertEqual(summary_parameters, (BUSINESS_ID,) * 4)
-        low_stock_query, low_stock_parameters = calls[1].args
-        self.assertIn("stock_quantity < 5", low_stock_query)
+        self.assertEqual(summary_parameters, (BUSINESS_ID, BUSINESS_ID, BUSINESS_ID, "Africa/Lagos", "Africa/Lagos", BUSINESS_ID, "Africa/Lagos", "Africa/Lagos"))
+        low_stock_query, low_stock_parameters = calls[2].args
+        self.assertIn("stock_quantity < %s", low_stock_query)
         self.assertIn("business_id = %s", low_stock_query)
-        self.assertEqual(low_stock_parameters, (BUSINESS_ID,))
-        top_query, top_parameters = calls[2].args
+        self.assertEqual(low_stock_parameters, (BUSINESS_ID, 5))
+        top_query, top_parameters = calls[3].args
         self.assertIn("sum(s.quantity)", top_query)
         self.assertIn("ORDER BY quantity_sold DESC", top_query)
         self.assertIn("LIMIT 5", top_query)
@@ -94,18 +101,22 @@ class DashboardApiTests(unittest.TestCase):
 
     def test_dashboard_returns_empty_data_when_business_has_no_records(self) -> None:
         cursor, context = self.database_mocks()
-        cursor.fetchone.return_value = {
-            "total_products": 0,
-            "total_stock_quantity": 0,
-            "today_total_sales": Decimal("0"),
-            "today_total_profit": Decimal("0"),
-        }
+        cursor.fetchone.side_effect = [
+            {"low_stock_threshold": 6, "timezone": "Africa/Lagos"},
+            {
+                "total_products": 0,
+                "total_stock_quantity": 0,
+                "today_total_sales": Decimal("0"),
+                "today_total_profit": Decimal("0"),
+            },
+        ]
         cursor.fetchall.side_effect = [[], []]
 
         with patch.object(dashboard_route, "get_connection", return_value=context):
             response = dashboard_route.get_dashboard(USER)
 
         self.assertEqual(response.total_products, 0)
+        self.assertEqual(response.low_stock_threshold, 6)
         self.assertEqual(response.low_stock_products, [])
         self.assertEqual(response.top_selling_products, [])
 

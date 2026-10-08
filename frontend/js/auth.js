@@ -64,12 +64,15 @@ async function submitAuthForm(event) {
   submitButton.textContent = "Please wait…";
 
   const payload = Object.fromEntries(new FormData(form).entries());
-  for (const field of ["full_name", "business_name", "email"]) {
+  for (const field of ["full_name", "business_name", "email", "invitation_code"]) {
     if (typeof payload[field] === "string") payload[field] = payload[field].trim();
   }
-  const endpoint = form.dataset.authForm === "register"
-    ? "/api/auth/register/owner"
-    : "/api/auth/login";
+  const endpointByForm = {
+    register: "/api/auth/register/owner",
+    join: "/api/auth/register/manager",
+    login: "/api/auth/login",
+  };
+  const endpoint = endpointByForm[form.dataset.authForm] ?? "/api/auth/login";
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {

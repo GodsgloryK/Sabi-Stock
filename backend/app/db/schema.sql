@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS businesses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 160),
     owner_user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    low_stock_threshold INTEGER NOT NULL DEFAULT 5
+        CHECK (low_stock_threshold >= 0),
+    timezone TEXT NOT NULL DEFAULT 'Africa/Lagos',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

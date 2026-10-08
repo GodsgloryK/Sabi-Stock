@@ -27,6 +27,7 @@
         <a class="dashboard-nav__link dashboard-nav__link--active" href="./dashboard.html" aria-current="page">Dashboard</a>
         <a class="dashboard-nav__link" href="./products.html">Products</a>
         <a class="dashboard-nav__link" href="./sales.html">Sales</a>
+        <a class="dashboard-nav__link" href="./team.html" data-owner-only hidden>Team</a>
       </nav>
       <div class="dashboard-header__account">
         <span class="dashboard-avatar" aria-hidden="true" data-avatar>•</span>
@@ -107,7 +108,7 @@
           <div class="dashboard-panel__heading">
             <div>
               <h2>Low stock</h2>
-              <p>Products with fewer than 5 units</p>
+              <p data-low-stock-threshold-note>Products with fewer than 5 units</p>
             </div>
             <a class="panel-link" href="./products.html">View products <span aria-hidden="true">→</span></a>
           </div>
@@ -115,6 +116,20 @@
             <p class="panel-loading">Loading stock levels…</p>
           </div>
         </article>
+      </section>
+
+      <section class="dashboard-panel trend-panel">
+        <div class="dashboard-panel__heading">
+          <div>
+            <h2>Sales trend</h2>
+            <p>Revenue and profit over the last 30 days</p>
+          </div>
+          <span class="panel-period">30 days</span>
+        </div>
+        <div class="chart-container chart-container--trend">
+          <canvas id="sales-trend-chart" aria-label="Line chart of daily revenue and profit for the last 30 days"></canvas>
+        </div>
+        <p class="panel-empty" data-trend-chart-empty hidden>No sales recorded in the last 30 days.</p>
       </section>
 
       <section class="dashboard-panel top-products-panel">

@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Create your Smart-Stock business account." />
+    <meta name="description" content="Join an existing Smart-Stock business with an invitation code." />
     <meta name="theme-color" content="#f6f8f5" />
-    <title>Create account — Smart-Stock</title>
+    <title>Join a business — Smart-Stock</title>
     <link rel="stylesheet" href="./css/styles.css" />
     <script src="./js/config.js" defer></script>
     <script src="./js/auth.js" defer></script>
@@ -24,14 +24,14 @@
           <span>Smart<span class="brand__accent">-Stock</span></span>
         </a>
         <div class="auth-aside__content">
-          <p class="eyebrow"><span class="eyebrow__dot"></span> Start with clarity</p>
-          <h2>Make room for the next stage of your business.</h2>
-          <p class="auth-aside__text">Bring your products, inventory, and sales into one organized workspace.</p>
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Team access</p>
+          <h2>Join your business workspace.</h2>
+          <p class="auth-aside__text">Use the invitation code from your business owner to create your stock manager account.</p>
         </div>
         <p class="auth-aside__footer">A better view of your business starts here.</p>
       </aside>
 
-      <section class="auth-main" aria-labelledby="register-title">
+      <section class="auth-main" aria-labelledby="join-title">
         <div class="auth-form-wrap">
           <a class="brand" href="./index.html" aria-label="Smart-Stock home">
             <span class="brand__mark" aria-hidden="true">
@@ -44,11 +44,26 @@
             <span>Smart<span class="brand__accent">-Stock</span></span>
           </a>
           <div class="auth-intro">
-            <h1 id="register-title">Create your account</h1>
-            <p>Set up your business workspace to get started.</p>
+            <h1 id="join-title">Join a business</h1>
+            <p>Create your stock manager account with an invitation code.</p>
           </div>
 
-          <form data-auth-form="register" novalidate>
+          <form data-auth-form="join" novalidate>
+            <div class="form-field">
+              <label for="invitation-code">Invitation code</label>
+              <input
+                id="invitation-code"
+                name="invitation_code"
+                type="text"
+                placeholder="Paste the code from your business owner"
+                minlength="32"
+                maxlength="128"
+                required
+                data-trim-required
+                data-clear-message
+              />
+              <p class="form-hint">Ask your business owner for a fresh invitation code.</p>
+            </div>
             <div class="form-field">
               <label for="full-name">Your name</label>
               <input
@@ -56,24 +71,9 @@
                 name="full_name"
                 type="text"
                 autocomplete="name"
-                placeholder="e.g. Alex Morgan"
+                placeholder="e.g. Jordan Lee"
                 minlength="1"
                 maxlength="120"
-                required
-                data-trim-required
-                data-clear-message
-              />
-            </div>
-            <div class="form-field">
-              <label for="business-name">Business name</label>
-              <input
-                id="business-name"
-                name="business_name"
-                type="text"
-                autocomplete="organization"
-                placeholder="e.g. Morgan Supply Co."
-                minlength="1"
-                maxlength="160"
                 required
                 data-trim-required
                 data-clear-message
@@ -102,18 +102,18 @@
                 placeholder="Create a strong password"
                 minlength="12"
                 maxlength="128"
-                aria-describedby="password-hint"
+                aria-describedby="join-password-hint"
                 required
                 data-clear-message
               />
-              <p class="form-hint" id="password-hint">Use at least 12 characters.</p>
+              <p class="form-hint" id="join-password-hint">Use at least 12 characters.</p>
             </div>
             <div class="form-message form-message--error" role="alert" aria-live="polite" data-form-message hidden></div>
-            <button class="button auth-submit" type="submit">Create business account</button>
+            <button class="button auth-submit" type="submit">Join business</button>
           </form>
 
+          <p class="auth-switch">Need an account for your own business? <a href="./register.html">Register here</a></p>
           <p class="auth-switch">Already have an account? <a href="./login.html">Login</a></p>
-          <p class="auth-switch">Have an invitation code? <a href="./join.html">Join a business</a></p>
           <a class="back-home" href="./index.html">← Back to home</a>
         </div>
       </section>
