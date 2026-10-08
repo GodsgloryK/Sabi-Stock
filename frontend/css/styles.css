@@ -20,6 +20,7 @@
   --color-success: #176c45;
   --radius-card: 1.25rem;
   --shadow-card: 0 1.5rem 4rem rgb(24 38 31 / 9%);
+  --page-watermark-opacity: 0.07;
 }
 
 * {
@@ -42,6 +43,18 @@ body {
   overflow-x: hidden;
   background: var(--color-background);
   color: var(--color-text);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    url("../images/Smart-Stock%20Growth%20Logo%20(1).png") no-repeat center /
+    min(80vmin, 720px);
+  opacity: var(--page-watermark-opacity);
+  pointer-events: none;
 }
 
 button,
@@ -219,24 +232,6 @@ button,
   align-items: center;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
   gap: 3.5rem;
-}
-
-.hero::after {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 100vw;
-  transform: translateX(-50%);
-  background: linear-gradient(
-    90deg,
-    var(--color-background) 0%,
-    rgb(246 248 245 / 92%) 34%,
-    rgb(246 248 245 / 0%) 72%
-  );
-  pointer-events: none;
 }
 
 .hero__copy {
