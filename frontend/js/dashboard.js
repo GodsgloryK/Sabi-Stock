@@ -107,7 +107,7 @@ function renderChart(products) {
     datasets: [{
       label: "Units sold",
       data: products.map((product) => product.quantity_sold),
-      backgroundColor: ["#19764f", "#67a17b", "#9fc6a0", "#c9d9bd", "#e2e9d8"],
+      backgroundColor: ["#059669", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0"],
       borderRadius: 7,
       borderSkipped: false,
       maxBarThickness: 36,
@@ -136,14 +136,14 @@ function renderChart(products) {
       },
       scales: {
         x: {
-          ticks: { color: "#4e5d53", maxRotation: 45, minRotation: 0 },
+          ticks: { color: "#55645b", maxRotation: 45, minRotation: 0 },
           grid: { display: false },
           border: { display: false },
         },
         y: {
           beginAtZero: true,
-          ticks: { precision: 0, color: "#78867d" },
-          grid: { color: "#edf1ec" },
+          ticks: { precision: 0, color: "#6b7a71" },
+          grid: { color: "#eaf0ec" },
           border: { display: false },
         },
       },
@@ -172,8 +172,8 @@ function renderTrendChart(points, days) {
       {
         label: "Revenue",
         data: points.map((point) => Number(point.total_amount)),
-        borderColor: "#19764f",
-        backgroundColor: "rgb(25 118 79 / 12%)",
+        borderColor: "#059669",
+        backgroundColor: "rgb(5 150 105 / 12%)",
         fill: true,
         tension: 0.3,
         pointRadius: 2,
@@ -182,8 +182,8 @@ function renderTrendChart(points, days) {
       {
         label: "Profit",
         data: points.map((point) => Number(point.profit)),
-        borderColor: "#67a17b",
-        backgroundColor: "rgb(103 161 123 / 8%)",
+        borderColor: "#f59e0b",
+        backgroundColor: "rgb(245 158 11 / 12%)",
         fill: false,
         tension: 0.3,
         pointRadius: 2,
@@ -208,7 +208,7 @@ function renderTrendChart(points, days) {
         legend: {
           display: true,
           position: "bottom",
-          labels: { color: "#4e5d53", boxWidth: 12, font: { size: 11 } },
+          labels: { color: "#55645b", boxWidth: 12, font: { size: 11 } },
         },
         tooltip: {
           callbacks: {
@@ -218,14 +218,14 @@ function renderTrendChart(points, days) {
       },
       scales: {
         x: {
-          ticks: { color: "#4e5d53", maxTicksLimit: 10, maxRotation: 0 },
+          ticks: { color: "#55645b", maxTicksLimit: 10, maxRotation: 0 },
           grid: { display: false },
           border: { display: false },
         },
         y: {
           beginAtZero: true,
-          ticks: { color: "#78867d", callback: (value) => formatAmount(value) },
-          grid: { color: "#edf1ec" },
+          ticks: { color: "#6b7a71", callback: (value) => formatAmount(value) },
+          grid: { color: "#eaf0ec" },
           border: { display: false },
         },
       },
