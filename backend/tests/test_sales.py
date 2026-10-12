@@ -25,6 +25,7 @@ USER = UserResponse(
 )
 PRODUCT = {
     "id": PRODUCT_ID,
+    "sku": "LAMP-1",
     "name": "Desk Lamp",
     "stock_quantity": 8,
     "buying_price": Decimal("12.50"),
@@ -35,6 +36,7 @@ SALE = {
     "business_id": BUSINESS_ID,
     "product_id": PRODUCT_ID,
     "product_name": "Desk Lamp",
+    "product_sku": "LAMP-1",
     "quantity": 3,
     "selling_price": Decimal("24.99"),
     "buying_price": Decimal("12.50"),

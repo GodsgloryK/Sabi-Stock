@@ -34,11 +34,13 @@ The readiness endpoint is available at `http://127.0.0.1:8000/api/health`. It ch
 
 ### Products
 
-- `POST /api/products` — create a product for the authenticated user's business.
-- `GET /api/products` — list products, optionally filtered by `search` and `category`.
+- `POST /api/products` — create a product for the authenticated user's business. Requires a unique, manually entered `sku` (product ID); reused IDs return `409`.
+- `GET /api/products` — list products, optionally filtered by `search` (matches name or SKU) and `category`.
 - `GET /api/products/{product_id}` — read one product from the authenticated user's business.
-- `PUT /api/products/{product_id}` — update a product in the authenticated user's business.
-- `DELETE /api/products/{product_id}` — delete a product (blocked with `409` if sales exist).
+- `PUT /api/products/{product_id}` — update a product in the authenticated user's business; the `sku` can be changed but previous values stay retired.
+- `DELETE /api/products/{product_id}` — delete a product (blocked with `409` if sales exist). Its SKU is never reused.
+
+Product IDs are case-insensitive and unique per business. A retired-ID registry (`product_sku_registry`) remembers every SKU ever used, so a deleted product's ID cannot be entered again.
 
 ### Sales
 
@@ -55,8 +57,8 @@ The readiness endpoint is available at `http://127.0.0.1:8000/api/health`. It ch
 
 ### Reports
 
-- `GET /api/reports/export/sales.csv` — CSV export of sales; supports `date_from`, `date_to`, and `product_id` filters.
-- `GET /api/reports/export/products.csv` — CSV export of the product catalogue.
+- `GET /api/reports/export/sales.csv` — CSV export of sales (includes a Product ID column); supports `date_from`, `date_to`, and `product_id` filters.
+- `GET /api/reports/export/products.csv` — CSV export of the product catalogue (includes a Product ID column).
 
 Send authenticated requests with `Authorization: Bearer <access_token>`. Access tokens expire after `JWT_EXPIRE_MINUTES` (60 by default). User membership is rechecked against PostgreSQL for authenticated requests, so removed membership immediately loses access. All business-owned tables include a non-null `business_id` and all queries scope through the authenticated user's `business_id`.
 
@@ -65,7 +67,7 @@ Send authenticated requests with `Authorization: Bearer <access_token>`. Access 
 Protected pages share Dashboard / Products / Sales / Team navigation (Team is owner-only), account context, and logout:
 
 - `frontend/dashboard.html` — KPI cards, best-sellers bar chart, 30-day revenue/profit trend line chart, low-stock panel, auto-refresh every 60 seconds.
-- `frontend/products.html` — product CRUD, live search, category filter, low-stock/out-of-stock badges, CSV export.
+- `frontend/products.html` — product CRUD (each product has a unique, manually entered Product ID), live search (name or ID), category filter, low-stock/out-of-stock badges, CSV export.
 - `frontend/sales.html` — record sales from live stock, date-range and product filters, summary cards, paginated history with load-more, void & restock, CSV export.
 - `frontend/team.html` — owner-only; list members, invite stock managers with single-use codes, revoke invitations, remove members.
 
@@ -79,6 +81,7 @@ For a new database, apply `backend/app/db/schema.sql` (includes all tables). For
 2. `002_products.sql` — products
 3. `003_sales.sql` — sales
 4. `004_business_settings.sql` — `low_stock_threshold` and `timezone` columns on businesses
+5. `005_product_sku.sql` — product `sku` column (backfilled for existing rows) and the `product_sku_registry` retired-ID table
 
 Products with sales cannot be deleted; void sales first if the product needs to be removed.
 

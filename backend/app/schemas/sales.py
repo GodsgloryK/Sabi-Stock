@@ -10,11 +10,21 @@ class SaleCreate(BaseModel):
     quantity: int = Field(gt=0, le=2_147_483_647)
 
 
+class SaleBatchItemCreate(BaseModel):
+    product_id: UUID
+    quantity: int = Field(gt=0, le=2_147_483_647)
+
+
+class SaleBatchCreate(BaseModel):
+    items: list[SaleBatchItemCreate] = Field(min_length=1, max_length=50)
+
+
 class SaleResponse(BaseModel):
     id: UUID
     business_id: UUID
     product_id: UUID
     product_name: str
+    product_sku: str
     quantity: int
     selling_price: Decimal
     buying_price: Decimal

@@ -6,13 +6,14 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class ProductWrite(BaseModel):
+    sku: str = Field(min_length=1, max_length=64)
     name: str = Field(min_length=1, max_length=160)
     category: str = Field(min_length=1, max_length=80)
     buying_price: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
     selling_price: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
     stock_quantity: int = Field(ge=0, le=2_147_483_647)
 
-    @field_validator("name", "category")
+    @field_validator("sku", "name", "category")
     @classmethod
     def normalize_required_text(cls, value: str) -> str:
         value = value.strip()
@@ -24,6 +25,7 @@ class ProductWrite(BaseModel):
 class ProductResponse(BaseModel):
     id: UUID
     business_id: UUID
+    sku: str
     name: str
     category: str
     buying_price: Decimal

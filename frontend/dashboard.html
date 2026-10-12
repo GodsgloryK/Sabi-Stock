@@ -4,12 +4,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Your Smart-Stock business dashboard." />
-    <meta name="theme-color" content="#f7faf8" />
+    <meta name="theme-color" content="#E7E2DB" />
     <title>Dashboard — Smart-Stock</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./css/styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
     <script src="./js/config.js" defer></script>
     <script src="./js/dashboard.js" defer></script>
+    <script src="./js/help.js" defer></script>
   </head>
   <body class="dashboard-page">
     <header class="site-header dashboard-header">
@@ -26,6 +33,7 @@
       <nav class="dashboard-nav" aria-label="Workspace navigation">
         <a class="dashboard-nav__link dashboard-nav__link--active" href="./dashboard.html" aria-current="page">Dashboard</a>
         <a class="dashboard-nav__link" href="./products.html">Products</a>
+        <a class="dashboard-nav__link" href="./all-stock.html">All stock</a>
         <a class="dashboard-nav__link" href="./sales.html">Sales</a>
         <a class="dashboard-nav__link" href="./team.html" data-owner-only hidden>Team</a>
       </nav>

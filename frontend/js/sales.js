@@ -132,7 +132,7 @@ function renderProductOptions() {
   productSelect.replaceChildren(new Option("Select a product", ""));
   products.forEach((product) => {
     const option = new Option(
-      `${product.name} · ${product.stock_quantity} available`,
+      `${product.name} (${product.sku}) · ${product.stock_quantity} available`,
       product.id,
     );
     option.disabled = product.stock_quantity < 1;
@@ -149,7 +149,7 @@ function renderProductOptions() {
   const filterSelection = filterProduct.value;
   filterProduct.replaceChildren(new Option("All products", ""));
   products.forEach((product) => {
-    filterProduct.add(new Option(product.name, product.id));
+    filterProduct.add(new Option(`${product.name} (${product.sku})`, product.id));
   });
   if (products.some((product) => product.id === filterSelection)) {
     filterProduct.value = filterSelection;
@@ -172,7 +172,10 @@ function renderSales() {
 
   salesBody.innerHTML = sales.map((sale) => `
     <tr>
-      <td data-label="Product"><span class="product-name">${escapeHtml(sale.product_name)}</span></td>
+      <td data-label="Product">
+        <span class="product-name">${escapeHtml(sale.product_name)}</span>
+        ${sale.product_sku ? `<span class="sku-code sku-code--sub">${escapeHtml(sale.product_sku)}</span>` : ""}
+      </td>
       <td data-label="Quantity sold"><span class="stock-value">${sale.quantity}</span></td>
       <td data-label="Total amount">${formatMoney(sale.total_amount)}</td>
       <td data-label="Profit"><span class="${Number(sale.profit) < 0 ? "profit-value profit-value--negative" : "profit-value"}">${formatMoney(sale.profit)}</span></td>

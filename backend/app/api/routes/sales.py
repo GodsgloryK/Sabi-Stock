@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
@@ -8,7 +9,12 @@ from psycopg.rows import dict_row
 
 from app.api.dependencies import CurrentUser
 from app.db.connection import get_connection
-from app.schemas.sales import SaleCreate, SaleResponse, SalesSummaryResponse
+from app.schemas.sales import (
+    SaleBatchCreate,
+    SaleCreate,
+    SaleResponse,
+    SalesSummaryResponse,
+)
 
 router = APIRouter()
 
@@ -38,7 +44,7 @@ def record_sale(request: SaleCreate, current_user: CurrentUser) -> SaleResponse:
             with connection.cursor(row_factory=dict_row) as cursor:
                 product = cursor.execute(
                     """
-                    SELECT id, name, stock_quantity, buying_price, selling_price
+                    SELECT id, sku, name, stock_quantity, buying_price, selling_price
                     FROM products
                     WHERE id = %s AND business_id = %s
                     FOR UPDATE
@@ -98,12 +104,115 @@ def record_sale(request: SaleCreate, current_user: CurrentUser) -> SaleResponse:
                     ),
                 ).fetchone()
                 sale["product_name"] = product["name"]
+                sale["product_sku"] = product["sku"]
     except HTTPException:
         raise
     except (psycopg.Error, RuntimeError) as exc:
         raise _database_unavailable(exc) from exc
 
     return SaleResponse.model_validate(sale)
+
+
+@router.post(
+    "/batch",
+    response_model=list[SaleResponse],
+    status_code=status.HTTP_201_CREATED,
+)
+def record_sales_batch(
+    request: SaleBatchCreate,
+    current_user: CurrentUser,
+) -> list[SaleResponse]:
+    items = request.items
+    try:
+        with get_connection() as connection:
+            with connection.cursor(row_factory=dict_row) as cursor:
+                product_ids = [item.product_id for item in items]
+                products = cursor.execute(
+                    """
+                    SELECT id, sku, name, stock_quantity, buying_price, selling_price
+                    FROM products
+                    WHERE business_id = %s AND id = ANY(%s)
+                    FOR UPDATE
+                    """,
+                    (current_user.business_id, product_ids),
+                ).fetchall()
+
+                product_map = {str(product["id"]): product for product in products}
+                missing = [
+                    str(item.product_id)
+                    for item in items
+                    if str(item.product_id) not in product_map
+                ]
+                if missing:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Product not found in your business.",
+                    )
+
+                requested: dict[str, int] = defaultdict(int)
+                for item in items:
+                    requested[str(item.product_id)] += item.quantity
+
+                insufficient = [
+                    f"{product_map[pid]['name']} "
+                    f"(only {product_map[pid]['stock_quantity']} available)"
+                    for pid, quantity in requested.items()
+                    if product_map[pid]["stock_quantity"] < quantity
+                ]
+                if insufficient:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Insufficient stock: " + "; ".join(insufficient),
+                    )
+
+                results = []
+                for item in items:
+                    product = product_map[str(item.product_id)]
+                    selling_price = Decimal(product["selling_price"])
+                    buying_price = Decimal(product["buying_price"])
+                    quantity = item.quantity
+                    total_amount = selling_price * quantity
+                    profit = (selling_price - buying_price) * quantity
+
+                    cursor.execute(
+                        """
+                        UPDATE products
+                        SET stock_quantity = stock_quantity - %s,
+                            updated_at = now()
+                        WHERE id = %s AND business_id = %s
+                        """,
+                        (quantity, item.product_id, current_user.business_id),
+                    )
+                    sale = cursor.execute(
+                        """
+                        INSERT INTO sales (
+                            business_id, product_id, quantity, selling_price,
+                            buying_price, profit, total_amount
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id, business_id, product_id, quantity,
+                                  selling_price, buying_price, profit, total_amount,
+                                  created_at
+                        """,
+                        (
+                            current_user.business_id,
+                            item.product_id,
+                            quantity,
+                            selling_price,
+                            buying_price,
+                            profit,
+                            total_amount,
+                        ),
+                    ).fetchone()
+                    sale["product_name"] = product["name"]
+                    sale["product_sku"] = product["sku"]
+                    results.append(sale)
+    except HTTPException:
+        raise
+    except (psycopg.Error, RuntimeError) as exc:
+        raise _database_unavailable(exc) from exc
+
+    return [SaleResponse.model_validate(sale) for sale in results]
 
 
 def _build_sales_filters(
@@ -154,6 +263,7 @@ def list_sales(
                 sales = cursor.execute(
                     f"""
                     SELECT s.id, s.business_id, s.product_id, p.name AS product_name,
+                           p.sku AS product_sku,
                            s.quantity, s.selling_price, s.buying_price, s.profit,
                            s.total_amount, s.created_at
                     FROM sales AS s
@@ -210,6 +320,7 @@ def get_sale(sale_id: UUID, current_user: CurrentUser) -> SaleResponse:
                 sale = cursor.execute(
                     """
                     SELECT s.id, s.business_id, s.product_id, p.name AS product_name,
+                           p.sku AS product_sku,
                            s.quantity, s.selling_price, s.buying_price, s.profit,
                            s.total_amount, s.created_at
                     FROM sales AS s

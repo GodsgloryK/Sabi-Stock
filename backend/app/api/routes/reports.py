@@ -62,7 +62,7 @@ def export_sales_csv(
             with connection.cursor(row_factory=dict_row) as cursor:
                 rows = cursor.execute(
                     f"""
-                    SELECT p.name AS product_name, s.quantity,
+                    SELECT p.sku AS product_sku, p.name AS product_name, s.quantity,
                            s.selling_price, s.buying_price,
                            s.total_amount, s.profit, s.created_at
                     FROM sales AS s
@@ -78,6 +78,7 @@ def export_sales_csv(
 
     table_rows = [
         [
+            row["product_sku"],
             row["product_name"],
             row["quantity"],
             str(row["selling_price"]),
@@ -90,7 +91,7 @@ def export_sales_csv(
     ]
     return _streaming_csv(
         "smart-stock-sales.csv",
-        ["Product", "Quantity", "Selling price", "Buying price", "Total amount", "Profit", "Date"],
+        ["Product ID", "Product", "Quantity", "Selling price", "Buying price", "Total amount", "Profit", "Date"],
         table_rows,
     )
 
@@ -102,7 +103,7 @@ def export_products_csv(current_user: CurrentUser) -> StreamingResponse:
             with connection.cursor(row_factory=dict_row) as cursor:
                 rows = cursor.execute(
                     """
-                    SELECT name, category, buying_price, selling_price, stock_quantity
+                    SELECT sku, name, category, buying_price, selling_price, stock_quantity
                     FROM products
                     WHERE business_id = %s
                     ORDER BY lower(name), id
@@ -114,6 +115,7 @@ def export_products_csv(current_user: CurrentUser) -> StreamingResponse:
 
     table_rows = [
         [
+            row["sku"],
             row["name"],
             row["category"],
             str(row["buying_price"]),
@@ -124,6 +126,6 @@ def export_products_csv(current_user: CurrentUser) -> StreamingResponse:
     ]
     return _streaming_csv(
         "smart-stock-products.csv",
-        ["Product", "Category", "Buying price", "Selling price", "Stock quantity"],
+        ["Product ID", "Product", "Category", "Buying price", "Selling price", "Stock quantity"],
         table_rows,
     )

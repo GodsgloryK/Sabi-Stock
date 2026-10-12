@@ -46,6 +46,7 @@ CREATE INDEX IF NOT EXISTS business_invitations_business_id_idx
 CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    sku TEXT NOT NULL CHECK (length(trim(sku)) BETWEEN 1 AND 64),
     name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 160),
     category TEXT NOT NULL CHECK (length(trim(category)) BETWEEN 1 AND 80),
     buying_price NUMERIC(12, 2) NOT NULL CHECK (buying_price >= 0),
@@ -60,6 +61,19 @@ CREATE INDEX IF NOT EXISTS products_business_id_name_idx
 
 CREATE INDEX IF NOT EXISTS products_business_id_category_idx
     ON products (business_id, category);
+
+CREATE UNIQUE INDEX IF NOT EXISTS products_business_id_sku_unique_idx
+    ON products (business_id, lower(sku));
+
+CREATE TABLE IF NOT EXISTS product_sku_registry (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    sku TEXT NOT NULL CHECK (length(trim(sku)) BETWEEN 1 AND 64),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS product_sku_registry_business_sku_unique
+    ON product_sku_registry (business_id, lower(sku));
 
 CREATE UNIQUE INDEX IF NOT EXISTS products_id_business_id_unique_idx
     ON products (id, business_id);

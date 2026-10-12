@@ -112,9 +112,10 @@ function renderProducts() {
   const query = searchInput.value.trim().toLocaleLowerCase();
   const category = categoryFilter.value;
   const visibleProducts = products.filter((product) => {
-    const matchesName = product.name.toLocaleLowerCase().includes(query);
+    const matchesQuery = product.name.toLocaleLowerCase().includes(query)
+      || String(product.sku || "").toLocaleLowerCase().includes(query);
     const matchesCategory = !category || product.category === category;
-    return matchesName && matchesCategory;
+    return matchesQuery && matchesCategory;
   });
 
   productCount.textContent = `${visibleProducts.length} ${visibleProducts.length === 1 ? "product" : "products"}`;
@@ -122,12 +123,13 @@ function renderProducts() {
     const message = products.length === 0
       ? "No products yet. Add your first product to get started."
       : "No products match your search or category filter.";
-    productsBody.innerHTML = `<tr><td class="products-table__status" colspan="6">${message}</td></tr>`;
+    productsBody.innerHTML = `<tr><td class="products-table__status" colspan="7">${message}</td></tr>`;
     return;
   }
 
   productsBody.innerHTML = visibleProducts.map((product) => `
     <tr>
+      <td data-label="Product ID"><span class="sku-code">${escapeHtml(product.sku)}</span></td>
       <td data-label="Product"><span class="product-name">${escapeHtml(product.name)}</span></td>
       <td data-label="Category"><span class="category-badge">${escapeHtml(product.category)}</span></td>
       <td data-label="Buying price">${formatPrice(product.buying_price)}</td>
@@ -142,7 +144,7 @@ function renderProducts() {
 }
 
 async function loadProducts() {
-  productsBody.innerHTML = '<tr><td class="products-table__status" colspan="6">Loading your products…</td></tr>';
+  productsBody.innerHTML = '<tr><td class="products-table__status" colspan="7">Loading your products…</td></tr>';
   const result = await apiRequest("/products");
   products = result;
   refreshCategories();
@@ -161,7 +163,7 @@ function openCreateForm() {
   clearMessage();
   closeForm();
   formCard.hidden = false;
-  document.querySelector("#product-name").focus();
+  document.querySelector("#product-sku").focus();
   formCard.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -173,6 +175,7 @@ async function openEditForm(productId) {
   try {
     const product = await apiRequest(`/products/${encodeURIComponent(productId)}`);
     editingProductId = product.id;
+    productForm.elements.sku.value = product.sku;
     productForm.elements.name.value = product.name;
     productForm.elements.category.value = product.category;
     productForm.elements.buying_price.value = product.buying_price;
@@ -181,7 +184,7 @@ async function openEditForm(productId) {
     document.querySelector("[data-form-title]").textContent = "Edit product";
     document.querySelector("[data-save-product]").textContent = "Save changes";
     formCard.hidden = false;
-    document.querySelector("#product-name").focus();
+    document.querySelector("#product-sku").focus();
     formCard.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
     showMessage(error.message);
@@ -212,6 +215,7 @@ productForm.addEventListener("submit", async (event) => {
 
   const values = new FormData(productForm);
   const payload = {
+    sku: String(values.get("sku")).trim(),
     name: String(values.get("name")).trim(),
     category: String(values.get("category")).trim(),
     buying_price: Number(values.get("buying_price")),
@@ -219,7 +223,8 @@ productForm.addEventListener("submit", async (event) => {
     stock_quantity: Number(values.get("stock_quantity")),
   };
   if (
-    !payload.name
+    !payload.sku
+    || !payload.name
     || !payload.category
     || !Number.isFinite(payload.buying_price)
     || !Number.isFinite(payload.selling_price)
@@ -228,7 +233,7 @@ productForm.addEventListener("submit", async (event) => {
     || payload.selling_price < 0
     || payload.stock_quantity < 0
   ) {
-    showMessage("Enter a name and category, prices of zero or more, and a whole-number stock quantity of zero or more.");
+    showMessage("Enter a product ID, name and category, prices of zero or more, and a whole-number stock quantity of zero or more.");
     return;
   }
 
@@ -331,7 +336,7 @@ async function initializeProductsPage() {
     await loadProducts();
   } catch (error) {
     showMessage(error.message);
-    productsBody.innerHTML = '<tr><td class="products-table__status" colspan="6">Products could not be loaded.</td></tr>';
+    productsBody.innerHTML = '<tr><td class="products-table__status" colspan="7">Products could not be loaded.</td></tr>';
     productCount.textContent = "—";
   }
 }

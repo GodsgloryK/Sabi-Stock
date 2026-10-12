@@ -25,6 +25,13 @@ def _not_found() -> HTTPException:
     )
 
 
+def _duplicate_sku() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail="This product ID is already in use. Choose a different one.",
+    )
+
+
 @router.post(
     "",
     response_model=ProductResponse,
@@ -34,18 +41,26 @@ def create_product(request: ProductWrite, current_user: CurrentUser) -> ProductR
     try:
         with get_connection() as connection:
             with connection.cursor(row_factory=dict_row) as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO product_sku_registry (business_id, sku)
+                    VALUES (%s, %s)
+                    """,
+                    (current_user.business_id, request.sku),
+                )
                 product = cursor.execute(
                     """
                     INSERT INTO products (
-                        business_id, name, category, buying_price,
+                        business_id, sku, name, category, buying_price,
                         selling_price, stock_quantity
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    RETURNING id, business_id, name, category, buying_price,
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id, business_id, sku, name, category, buying_price,
                               selling_price, stock_quantity, created_at, updated_at
                     """,
                     (
                         current_user.business_id,
+                        request.sku,
                         request.name,
                         request.category,
                         request.buying_price,
@@ -53,6 +68,8 @@ def create_product(request: ProductWrite, current_user: CurrentUser) -> ProductR
                         request.stock_quantity,
                     ),
                 ).fetchone()
+    except psycopg.errors.UniqueViolation as exc:
+        raise _duplicate_sku() from exc
     except (psycopg.Error, RuntimeError) as exc:
         raise _database_unavailable(exc) from exc
 
@@ -69,8 +86,10 @@ def list_products(
     parameters: list[object] = [current_user.business_id]
 
     if search and search.strip():
-        conditions.append("name ILIKE %s")
-        parameters.append(f"%{search.strip()}%")
+        conditions.append("(name ILIKE %s OR sku ILIKE %s)")
+        pattern = f"%{search.strip()}%"
+        parameters.append(pattern)
+        parameters.append(pattern)
     if category and category.strip():
         conditions.append("category = %s")
         parameters.append(category.strip())
@@ -80,7 +99,7 @@ def list_products(
             with connection.cursor(row_factory=dict_row) as cursor:
                 products = cursor.execute(
                     f"""
-                    SELECT id, business_id, name, category, buying_price,
+                    SELECT id, business_id, sku, name, category, buying_price,
                            selling_price, stock_quantity, created_at, updated_at
                     FROM products
                     WHERE {" AND ".join(conditions)}
@@ -101,7 +120,7 @@ def get_product(product_id: UUID, current_user: CurrentUser) -> ProductResponse:
             with connection.cursor(row_factory=dict_row) as cursor:
                 product = cursor.execute(
                     """
-                    SELECT id, business_id, name, category, buying_price,
+                    SELECT id, business_id, sku, name, category, buying_price,
                            selling_price, stock_quantity, created_at, updated_at
                     FROM products
                     WHERE id = %s AND business_id = %s
@@ -125,20 +144,43 @@ def update_product(
     try:
         with get_connection() as connection:
             with connection.cursor(row_factory=dict_row) as cursor:
+                existing = cursor.execute(
+                    """
+                    SELECT sku
+                    FROM products
+                    WHERE id = %s AND business_id = %s
+                    FOR UPDATE
+                    """,
+                    (product_id, current_user.business_id),
+                ).fetchone()
+                if existing is None:
+                    raise _not_found()
+
+                if existing["sku"].strip().casefold() != request.sku.strip().casefold():
+                    cursor.execute(
+                        """
+                        INSERT INTO product_sku_registry (business_id, sku)
+                        VALUES (%s, %s)
+                        """,
+                        (current_user.business_id, request.sku),
+                    )
+
                 product = cursor.execute(
                     """
                     UPDATE products
-                    SET name = %s,
+                    SET sku = %s,
+                        name = %s,
                         category = %s,
                         buying_price = %s,
                         selling_price = %s,
                         stock_quantity = %s,
                         updated_at = now()
                     WHERE id = %s AND business_id = %s
-                    RETURNING id, business_id, name, category, buying_price,
+                    RETURNING id, business_id, sku, name, category, buying_price,
                               selling_price, stock_quantity, created_at, updated_at
                     """,
                     (
+                        request.sku,
                         request.name,
                         request.category,
                         request.buying_price,
@@ -148,6 +190,10 @@ def update_product(
                         current_user.business_id,
                     ),
                 ).fetchone()
+    except HTTPException:
+        raise
+    except psycopg.errors.UniqueViolation as exc:
+        raise _duplicate_sku() from exc
     except (psycopg.Error, RuntimeError) as exc:
         raise _database_unavailable(exc) from exc
 

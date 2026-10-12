@@ -4,6 +4,7 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
+import psycopg
 from fastapi import HTTPException
 
 from app.api.dependencies import get_current_user
@@ -25,6 +26,7 @@ PRODUCT_ID = uuid4()
 PRODUCT = {
     "id": PRODUCT_ID,
     "business_id": BUSINESS_ID,
+    "sku": "LAMP-1",
     "name": "Desk Lamp",
     "category": "Lighting",
     "buying_price": Decimal("12.50"),
@@ -34,6 +36,7 @@ PRODUCT = {
     "updated_at": datetime.now(timezone.utc),
 }
 PRODUCT_INPUT = {
+    "sku": "LAMP-1",
     "name": "Desk Lamp",
     "category": "Lighting",
     "buying_price": "12.50",
@@ -97,7 +100,8 @@ class ProductApiTests(unittest.TestCase):
         self.assertEqual(len(response), 1)
         query, parameters = cursor.execute.call_args.args
         self.assertIn("WHERE business_id = %s", query)
-        self.assertEqual(parameters, [BUSINESS_ID, "%lamp%", "Lighting"])
+        self.assertIn("sku ILIKE %s", query)
+        self.assertEqual(parameters, [BUSINESS_ID, "%lamp%", "%lamp%", "Lighting"])
 
     def test_other_business_product_is_not_found(self) -> None:
         cursor, context = self.database_mocks()
@@ -144,6 +148,50 @@ class ProductApiTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             ProductWrite.model_validate(invalid_product)
+
+    def test_product_requires_sku(self) -> None:
+        incomplete = {key: value for key, value in PRODUCT_INPUT.items() if key != "sku"}
+
+        with self.assertRaises(ValueError):
+            ProductWrite.model_validate(incomplete)
+
+    def test_create_product_registers_sku(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchone.return_value = PRODUCT
+
+        with patch.object(products_route, "get_connection", return_value=context):
+            products_route.create_product(ProductWrite.model_validate(PRODUCT_INPUT), USER)
+
+        first_query, first_parameters = cursor.execute.call_args_list[0].args
+        self.assertIn("INSERT INTO product_sku_registry", first_query)
+        self.assertEqual(first_parameters, (BUSINESS_ID, "LAMP-1"))
+
+    def test_create_product_rejects_reused_sku(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.execute.side_effect = psycopg.errors.UniqueViolation("duplicate key")
+
+        with patch.object(products_route, "get_connection", return_value=context):
+            with self.assertRaises(HTTPException) as raised:
+                products_route.create_product(ProductWrite.model_validate(PRODUCT_INPUT), USER)
+
+        self.assertEqual(raised.exception.status_code, 409)
+
+    def test_update_product_rejects_reused_sku(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchone.return_value = PRODUCT
+        cursor.execute.side_effect = [cursor, psycopg.errors.UniqueViolation("duplicate key")]
+        changed = {**PRODUCT_INPUT, "sku": "LAMP-2"}
+
+        with patch.object(products_route, "get_connection", return_value=context):
+            with self.assertRaises(HTTPException) as raised:
+                products_route.update_product(
+                    PRODUCT_ID,
+                    ProductWrite.model_validate(changed),
+                    USER,
+                )
+
+        self.assertEqual(raised.exception.status_code, 409)
+        self.assertEqual(cursor.execute.call_args_list[0].args[1], (PRODUCT_ID, BUSINESS_ID))
 
     def test_product_delete_returns_no_content_for_own_business(self) -> None:
         cursor, context = self.database_mocks()

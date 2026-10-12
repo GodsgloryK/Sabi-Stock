@@ -4,11 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Manage products for your Smart-Stock business." />
-    <meta name="theme-color" content="#f7faf8" />
+    <meta name="theme-color" content="#E7E2DB" />
     <title>Products — Smart-Stock</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./css/styles.css" />
     <script src="./js/config.js" defer></script>
     <script src="./js/products.js" defer></script>
+    <script src="./js/help.js" defer></script>
   </head>
   <body class="products-page">
     <header class="site-header products-header">
@@ -25,6 +32,7 @@
       <nav class="dashboard-nav" aria-label="Workspace navigation">
         <a class="dashboard-nav__link" href="./dashboard.html">Dashboard</a>
         <a class="dashboard-nav__link dashboard-nav__link--active" href="./products.html" aria-current="page">Products</a>
+        <a class="dashboard-nav__link" href="./all-stock.html">All stock</a>
         <a class="dashboard-nav__link" href="./sales.html">Sales</a>
         <a class="dashboard-nav__link" href="./team.html" data-owner-only hidden>Team</a>
       </nav>
@@ -56,6 +64,10 @@
           <button class="icon-button" type="button" data-cancel-form aria-label="Close product form">×</button>
         </div>
         <form class="product-form" data-product-form novalidate>
+          <div class="form-field">
+            <label for="product-sku">Product ID</label>
+            <input id="product-sku" name="sku" type="text" maxlength="64" placeholder="e.g. SKU-0001" required />
+          </div>
           <div class="form-field">
             <label for="product-name">Product name</label>
             <input id="product-name" name="name" type="text" maxlength="160" required />
@@ -108,6 +120,7 @@
           <table class="products-table">
             <thead>
               <tr>
+                <th scope="col">Product ID</th>
                 <th scope="col">Product</th>
                 <th scope="col">Category</th>
                 <th scope="col">Buying price</th>
@@ -117,7 +130,7 @@
               </tr>
             </thead>
             <tbody data-products-body>
-              <tr><td class="products-table__status" colspan="6">Loading your products…</td></tr>
+              <tr><td class="products-table__status" colspan="7">Loading your products…</td></tr>
             </tbody>
           </table>
         </div>
