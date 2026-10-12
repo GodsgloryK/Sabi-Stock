@@ -114,3 +114,36 @@ document.querySelectorAll("[data-auth-form]").forEach((form) => {
 document.querySelectorAll("[data-clear-message]").forEach((input) => {
   input.addEventListener("input", clearFormMessage);
 });
+
+const EYE_SVG =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11z"/><circle cx="12" cy="12" r="3.2"/></svg>';
+const EYE_OFF_SVG =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 1 23 23"/><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11z"/><circle cx="12" cy="12" r="3.2"/></svg>';
+
+function createPasswordToggle(input) {
+  const wrapper = document.createElement("span");
+  wrapper.className = "password-field";
+  input.parentNode.insertBefore(wrapper, input);
+  wrapper.appendChild(input);
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "icon-button password-toggle";
+  button.setAttribute("aria-label", "Show password");
+  button.setAttribute("aria-pressed", "false");
+  button.innerHTML = EYE_OFF_SVG;
+
+  let revealed = false;
+  button.addEventListener("click", () => {
+    revealed = !revealed;
+    input.type = revealed ? "text" : "password";
+    button.innerHTML = revealed ? EYE_SVG : EYE_OFF_SVG;
+    button.setAttribute("aria-label", revealed ? "Hide password" : "Show password");
+    button.setAttribute("aria-pressed", String(revealed));
+    input.focus();
+  });
+
+  wrapper.appendChild(button);
+}
+
+document.querySelectorAll('input[type="password"]').forEach(createPasswordToggle);
