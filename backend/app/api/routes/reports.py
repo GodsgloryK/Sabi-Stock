@@ -64,9 +64,11 @@ def export_sales_csv(
                     f"""
                     SELECT p.sku AS product_sku, p.name AS product_name, s.quantity,
                            s.selling_price, s.buying_price,
-                           s.total_amount, s.profit, s.created_at
+                           s.total_amount, s.profit,
+                           u.full_name AS recorded_by_name, s.created_at
                     FROM sales AS s
                     JOIN products AS p ON p.id = s.product_id
+                    LEFT JOIN users AS u ON u.id = s.recorded_by_user_id
                     WHERE {where_clause}
                     ORDER BY s.created_at DESC, s.id DESC
                     LIMIT 10000
@@ -85,13 +87,14 @@ def export_sales_csv(
             str(row["buying_price"]),
             str(row["total_amount"]),
             str(row["profit"]),
+            row["recorded_by_name"] or "",
             row["created_at"].isoformat(),
         ]
         for row in rows
     ]
     return _streaming_csv(
         "smart-stock-sales.csv",
-        ["Product ID", "Product", "Quantity", "Selling price", "Buying price", "Total amount", "Profit", "Date"],
+        ["Product ID", "Product", "Quantity", "Selling price", "Buying price", "Total amount", "Profit", "Recorded by", "Date"],
         table_rows,
     )
 

@@ -68,7 +68,7 @@ Protected pages share Dashboard / Products / Sales / Team navigation (Team is ow
 
 - `frontend/dashboard.html` — KPI cards, best-sellers bar chart, 30-day revenue/profit trend line chart, low-stock panel, auto-refresh every 60 seconds.
 - `frontend/products.html` — product CRUD (each product has a unique, manually entered Product ID), live search (name or ID), category filter, low-stock/out-of-stock badges, CSV export.
-- `frontend/sales.html` — record sales from live stock, date-range and product filters, summary cards, paginated history with load-more, void & restock, CSV export.
+- `frontend/sales.html` — record sales from live stock, date-range and product filters, summary cards, paginated history with the recording team member, load-more, void & restock, CSV export.
 - `frontend/team.html` — owner-only; list members, invite stock managers with single-use codes, revoke invitations, remove members.
 
 `frontend/join.html` lets a stock manager create an account with an invitation code. The returned token is held in `sessionStorage`, so it is cleared when the browser tab session ends.
@@ -82,6 +82,7 @@ For a new database, apply `backend/app/db/schema.sql` (includes all tables). For
 3. `003_sales.sql` — sales
 4. `004_business_settings.sql` — `low_stock_threshold` and `timezone` columns on businesses
 5. `005_product_sku.sql` — product `sku` column (backfilled for existing rows) and the `product_sku_registry` retired-ID table
+6. `006_sale_recorder.sql` — `recorded_by_user_id` on sales (backfilled to the business owner) so each sale shows who recorded it
 
 Products with sales cannot be deleted; void sales first if the product needs to be removed.
 

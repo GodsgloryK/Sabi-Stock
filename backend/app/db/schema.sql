@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS sales (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     business_id UUID NOT NULL,
     product_id UUID NOT NULL,
+    recorded_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
     selling_price NUMERIC(12, 2) NOT NULL CHECK (selling_price >= 0),
     buying_price NUMERIC(12, 2) NOT NULL CHECK (buying_price >= 0),
@@ -97,3 +98,6 @@ CREATE INDEX IF NOT EXISTS sales_business_id_created_at_idx
 
 CREATE INDEX IF NOT EXISTS sales_product_id_idx
     ON sales (product_id);
+
+CREATE INDEX IF NOT EXISTS sales_recorded_by_user_id_idx
+    ON sales (recorded_by_user_id);

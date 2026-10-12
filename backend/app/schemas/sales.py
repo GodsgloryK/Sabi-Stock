@@ -30,6 +30,8 @@ class SaleResponse(BaseModel):
     buying_price: Decimal
     profit: Decimal
     total_amount: Decimal
+    recorded_by_user_id: UUID | None = None
+    recorded_by_name: str | None = None
     created_at: datetime
 
 

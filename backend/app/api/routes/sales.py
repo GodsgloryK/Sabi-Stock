@@ -85,17 +85,18 @@ def record_sale(request: SaleCreate, current_user: CurrentUser) -> SaleResponse:
                 sale = cursor.execute(
                     """
                     INSERT INTO sales (
-                        business_id, product_id, quantity, selling_price,
-                        buying_price, profit, total_amount
+                        business_id, product_id, recorded_by_user_id, quantity,
+                        selling_price, buying_price, profit, total_amount
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    RETURNING id, business_id, product_id, quantity,
-                              selling_price, buying_price, profit, total_amount,
-                              created_at
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id, business_id, product_id, recorded_by_user_id,
+                              quantity, selling_price, buying_price, profit,
+                              total_amount, created_at
                     """,
                     (
                         current_user.business_id,
                         product["id"],
+                        current_user.id,
                         quantity,
                         selling_price,
                         buying_price,
@@ -105,6 +106,7 @@ def record_sale(request: SaleCreate, current_user: CurrentUser) -> SaleResponse:
                 ).fetchone()
                 sale["product_name"] = product["name"]
                 sale["product_sku"] = product["sku"]
+                sale["recorded_by_name"] = current_user.full_name
     except HTTPException:
         raise
     except (psycopg.Error, RuntimeError) as exc:
@@ -186,17 +188,18 @@ def record_sales_batch(
                     sale = cursor.execute(
                         """
                         INSERT INTO sales (
-                            business_id, product_id, quantity, selling_price,
-                            buying_price, profit, total_amount
+                            business_id, product_id, recorded_by_user_id, quantity,
+                            selling_price, buying_price, profit, total_amount
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id, business_id, product_id, quantity,
-                                  selling_price, buying_price, profit, total_amount,
-                                  created_at
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id, business_id, product_id, recorded_by_user_id,
+                                  quantity, selling_price, buying_price, profit,
+                                  total_amount, created_at
                         """,
                         (
                             current_user.business_id,
                             item.product_id,
+                            current_user.id,
                             quantity,
                             selling_price,
                             buying_price,
@@ -206,6 +209,7 @@ def record_sales_batch(
                     ).fetchone()
                     sale["product_name"] = product["name"]
                     sale["product_sku"] = product["sku"]
+                    sale["recorded_by_name"] = current_user.full_name
                     results.append(sale)
     except HTTPException:
         raise
@@ -264,10 +268,12 @@ def list_sales(
                     f"""
                     SELECT s.id, s.business_id, s.product_id, p.name AS product_name,
                            p.sku AS product_sku,
+                           s.recorded_by_user_id, u.full_name AS recorded_by_name,
                            s.quantity, s.selling_price, s.buying_price, s.profit,
                            s.total_amount, s.created_at
                     FROM sales AS s
                     JOIN products AS p ON p.id = s.product_id
+                    LEFT JOIN users AS u ON u.id = s.recorded_by_user_id
                     WHERE {where_clause}
                     ORDER BY s.created_at DESC, s.id DESC
                     LIMIT %s OFFSET %s
@@ -321,10 +327,12 @@ def get_sale(sale_id: UUID, current_user: CurrentUser) -> SaleResponse:
                     """
                     SELECT s.id, s.business_id, s.product_id, p.name AS product_name,
                            p.sku AS product_sku,
+                           s.recorded_by_user_id, u.full_name AS recorded_by_name,
                            s.quantity, s.selling_price, s.buying_price, s.profit,
                            s.total_amount, s.created_at
                     FROM sales AS s
                     JOIN products AS p ON p.id = s.product_id
+                    LEFT JOIN users AS u ON u.id = s.recorded_by_user_id
                     WHERE s.id = %s AND s.business_id = %s
                     """,
                     (sale_id, current_user.business_id),

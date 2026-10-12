@@ -47,7 +47,7 @@
         <div>
           <p class="eyebrow"><span class="eyebrow__dot"></span> Sales activity</p>
           <h1>Sales</h1>
-          <p class="products-title__description">Record a sale and keep your stock levels up to date.</p>
+          <p class="products-title__description">Record sales and keep your stock levels up to date.</p>
         </div>
         <a class="button button--secondary" href="./products.html">Manage products</a>
       </section>
@@ -56,26 +56,16 @@
         <div class="sale-form-card__heading">
           <div>
             <h2 id="sale-form-title">Record a sale</h2>
-            <p>Select a product and enter the quantity sold.</p>
+            <p>Select product(s) and enter quantity sold (up to 50 items).</p>
           </div>
           <span class="sale-form-card__icon" aria-hidden="true">↗</span>
         </div>
-        <form class="sale-form" data-sale-form novalidate>
-          <div class="form-field">
-            <label for="sale-product">Product</label>
-            <select id="sale-product" name="product_id" required data-sale-product>
-              <option value="">Loading products…</option>
-            </select>
+        <form class="sale-form sale-form--batch" data-sale-form novalidate>
+          <div class="sale-items" data-sale-items></div>
+          <div class="sale-form-actions">
+            <button class="button button--secondary button--small" type="button" data-add-item>Add item</button>
+            <button class="button sale-submit" type="submit" data-submit-sale>Record sales</button>
           </div>
-          <div class="form-field">
-            <label for="sale-quantity">Quantity sold</label>
-            <input id="sale-quantity" name="quantity" type="number" min="1" max="2147483647" step="1" inputmode="numeric" placeholder="Enter quantity" required data-sale-quantity />
-          </div>
-          <div class="sale-stock-panel" aria-live="polite">
-            <span class="sale-stock-panel__label">Available stock</span>
-            <strong data-available-stock>—</strong>
-          </div>
-          <button class="button sale-submit" type="submit" data-submit-sale>Record sale</button>
         </form>
       </section>
 
@@ -135,7 +125,7 @@
             <select id="sale-product-filter" class="category-filter" data-filter-product>
               <option value="">All products</option>
             </select>
-            <button class="button button--secondary button--small" type="button" data-clear-filters>Clear</button>
+            <button class="button button--secondary button--small" type="button" data-clear-filters>Clear history</button>
             <button class="button button--secondary button--small" type="button" data-export-csv>Export CSV</button>
           </div>
         </div>
@@ -147,12 +137,13 @@
                 <th scope="col">Quantity sold</th>
                 <th scope="col">Total amount</th>
                 <th scope="col">Profit</th>
+                <th scope="col">Recorded by</th>
                 <th scope="col">Date</th>
                 <th scope="col"><span class="visually-hidden">Actions</span></th>
               </tr>
             </thead>
             <tbody data-sales-body>
-              <tr><td class="products-table__status" colspan="6">Loading your sales…</td></tr>
+              <tr><td class="products-table__status" colspan="7">Loading your sales…</td></tr>
             </tbody>
           </table>
         </div>

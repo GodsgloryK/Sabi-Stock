@@ -10,10 +10,11 @@ from app.api.dependencies import get_current_user
 from app.api.routes import sales as sales_route
 from app.main import app
 from app.schemas.auth import UserResponse
-from app.schemas.sales import SaleCreate
+from app.schemas.sales import SaleBatchCreate, SaleBatchItemCreate, SaleCreate
 
 BUSINESS_ID = uuid4()
 PRODUCT_ID = uuid4()
+PRODUCT_TWO_ID = uuid4()
 SALE_ID = uuid4()
 USER = UserResponse(
     id=uuid4(),
@@ -37,11 +38,36 @@ SALE = {
     "product_id": PRODUCT_ID,
     "product_name": "Desk Lamp",
     "product_sku": "LAMP-1",
+    "recorded_by_user_id": USER.id,
+    "recorded_by_name": "Sale Owner",
     "quantity": 3,
     "selling_price": Decimal("24.99"),
     "buying_price": Decimal("12.50"),
     "profit": Decimal("37.47"),
     "total_amount": Decimal("74.97"),
+    "created_at": datetime.now(timezone.utc),
+}
+PRODUCT_TWO = {
+    "id": PRODUCT_TWO_ID,
+    "sku": "CHAIR-2",
+    "name": "Office Chair",
+    "stock_quantity": 5,
+    "buying_price": Decimal("40.00"),
+    "selling_price": Decimal("75.00"),
+}
+SALE_TWO = {
+    "id": uuid4(),
+    "business_id": BUSINESS_ID,
+    "product_id": PRODUCT_TWO_ID,
+    "product_name": "Office Chair",
+    "product_sku": "CHAIR-2",
+    "recorded_by_user_id": USER.id,
+    "recorded_by_name": "Sale Owner",
+    "quantity": 1,
+    "selling_price": Decimal("75.00"),
+    "buying_price": Decimal("40.00"),
+    "profit": Decimal("35.00"),
+    "total_amount": Decimal("75.00"),
     "created_at": datetime.now(timezone.utc),
 }
 
@@ -68,6 +94,7 @@ class SalesApiTests(unittest.TestCase):
         operations = [
             paths["/api/sales"]["post"],
             paths["/api/sales"]["get"],
+            paths["/api/sales/batch"]["post"],
             paths["/api/sales/{sale_id}"]["get"],
             paths["/api/sales/{sale_id}"]["delete"],
         ]
@@ -96,6 +123,7 @@ class SalesApiTests(unittest.TestCase):
             (
                 BUSINESS_ID,
                 PRODUCT_ID,
+                USER.id,
                 3,
                 Decimal("24.99"),
                 Decimal("12.50"),
@@ -103,6 +131,8 @@ class SalesApiTests(unittest.TestCase):
                 Decimal("74.97"),
             ),
         )
+        self.assertEqual(response.recorded_by_user_id, USER.id)
+        self.assertEqual(response.recorded_by_name, USER.full_name)
 
     def test_record_sale_rejects_product_from_another_business(self) -> None:
         cursor, context = self.database_mocks()
@@ -241,6 +271,136 @@ class SalesApiTests(unittest.TestCase):
 
         self.assertEqual(raised.exception.status_code, 404)
         self.assertEqual(cursor.execute.call_count, 1)
+
+    def test_record_sales_batch_records_each_item_and_decrements_stock(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchall.return_value = [PRODUCT, PRODUCT_TWO]
+        cursor.fetchone.side_effect = [SALE, SALE_TWO]
+
+        with patch.object(sales_route, "get_connection", return_value=context):
+            response = sales_route.record_sales_batch(
+                SaleBatchCreate(
+                    items=[
+                        SaleBatchItemCreate(product_id=PRODUCT_ID, quantity=3),
+                        SaleBatchItemCreate(product_id=PRODUCT_TWO_ID, quantity=1),
+                    ]
+                ),
+                USER,
+            )
+
+        self.assertEqual(len(response), 2)
+        self.assertEqual(response[0].total_amount, Decimal("74.97"))
+        self.assertEqual(response[1].total_amount, Decimal("75.00"))
+        calls = cursor.execute.call_args_list
+        select_query, select_parameters = calls[0].args
+        self.assertIn("FOR UPDATE", select_query)
+        self.assertEqual(select_parameters, (BUSINESS_ID, [PRODUCT_ID, PRODUCT_TWO_ID]))
+        self.assertIn("UPDATE products", calls[1].args[0])
+        self.assertEqual(calls[1].args[1], (3, PRODUCT_ID, BUSINESS_ID))
+        self.assertIn("INSERT INTO sales", calls[2].args[0])
+        self.assertIn("UPDATE products", calls[3].args[0])
+        self.assertEqual(calls[3].args[1], (1, PRODUCT_TWO_ID, BUSINESS_ID))
+        self.assertIn("INSERT INTO sales", calls[4].args[0])
+
+    def test_record_sales_batch_aggregates_duplicate_items_before_stock_check(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchall.return_value = [PRODUCT]
+
+        with patch.object(sales_route, "get_connection", return_value=context):
+            with self.assertRaises(HTTPException) as raised:
+                sales_route.record_sales_batch(
+                    SaleBatchCreate(
+                        items=[
+                            SaleBatchItemCreate(product_id=PRODUCT_ID, quantity=5),
+                            SaleBatchItemCreate(product_id=PRODUCT_ID, quantity=5),
+                        ]
+                    ),
+                    USER,
+                )
+
+        self.assertEqual(raised.exception.status_code, 409)
+        self.assertIn("Desk Lamp", raised.exception.detail)
+        self.assertEqual(cursor.execute.call_count, 1)
+
+    def test_record_sales_batch_rejects_product_from_another_business(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchall.return_value = [PRODUCT]
+
+        with patch.object(sales_route, "get_connection", return_value=context):
+            with self.assertRaises(HTTPException) as raised:
+                sales_route.record_sales_batch(
+                    SaleBatchCreate(
+                        items=[
+                            SaleBatchItemCreate(product_id=PRODUCT_ID, quantity=1),
+                            SaleBatchItemCreate(product_id=uuid4(), quantity=1),
+                        ]
+                    ),
+                    USER,
+                )
+
+        self.assertEqual(raised.exception.status_code, 404)
+        self.assertEqual(cursor.execute.call_count, 1)
+
+    def test_record_sales_batch_rejects_quantity_above_stock_without_mutation(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchall.return_value = [PRODUCT]
+
+        with patch.object(sales_route, "get_connection", return_value=context):
+            with self.assertRaises(HTTPException) as raised:
+                sales_route.record_sales_batch(
+                    SaleBatchCreate(
+                        items=[SaleBatchItemCreate(product_id=PRODUCT_ID, quantity=9)]
+                    ),
+                    USER,
+                )
+
+        self.assertEqual(raised.exception.status_code, 409)
+        self.assertIn("only 8 available", raised.exception.detail)
+        self.assertEqual(cursor.execute.call_count, 1)
+
+    def test_record_sales_batch_attaches_recording_member(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchall.return_value = [PRODUCT]
+        cursor.fetchone.return_value = SALE
+
+        with patch.object(sales_route, "get_connection", return_value=context):
+            response = sales_route.record_sales_batch(
+                SaleBatchCreate(
+                    items=[SaleBatchItemCreate(product_id=PRODUCT_ID, quantity=3)]
+                ),
+                USER,
+            )
+
+        self.assertEqual(response[0].recorded_by_user_id, USER.id)
+        self.assertEqual(response[0].recorded_by_name, USER.full_name)
+        insert_parameters = cursor.execute.call_args_list[2].args[1]
+        self.assertEqual(insert_parameters[2], USER.id)
+
+    def test_list_sales_returns_recording_member(self) -> None:
+        cursor, context = self.database_mocks()
+        cursor.fetchone.return_value = {"total": 1}
+        cursor.fetchall.return_value = [SALE]
+        http_response = Response()
+
+        with patch.object(sales_route, "get_connection", return_value=context):
+            sales = sales_route.list_sales(USER, http_response, limit=20, offset=0)
+
+        list_query = cursor.execute.call_args_list[1].args[0]
+        self.assertIn("LEFT JOIN users AS u ON u.id = s.recorded_by_user_id", list_query)
+        self.assertIn("u.full_name AS recorded_by_name", list_query)
+        self.assertEqual(sales[0].recorded_by_name, "Sale Owner")
+
+    def test_batch_create_validates_item_count(self) -> None:
+        with self.assertRaises(ValueError):
+            SaleBatchCreate(items=[])
+
+        with self.assertRaises(ValueError):
+            SaleBatchCreate(
+                items=[
+                    SaleBatchItemCreate(product_id=uuid4(), quantity=1)
+                    for _ in range(51)
+                ]
+            )
 
 
 if __name__ == "__main__":

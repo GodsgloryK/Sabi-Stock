@@ -1839,6 +1839,44 @@ h3 {
   transform: none;
 }
 
+.sale-form--batch {
+  display: block;
+}
+
+.sale-items {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.sale-item {
+  display: grid;
+  align-items: end;
+  grid-template-columns: minmax(180px, 1.5fr) minmax(110px, 0.6fr) minmax(110px, 0.6fr) auto;
+  gap: 0.85rem;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 55%);
+}
+
+.sale-item .form-field {
+  margin-bottom: 0;
+}
+
+.sale-item__remove {
+  min-height: 47px;
+  padding-inline: 0.75rem;
+  white-space: nowrap;
+}
+
+.sale-form-actions {
+  display: flex;
+  margin-top: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
 .sales-history-card {
   margin-top: 1.5rem;
 }
@@ -2237,6 +2275,22 @@ h3 {
     min-height: 43px;
     padding-inline: 0.55rem;
     font-size: 0.82rem;
+  }
+
+  .sale-item {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+    padding: 0.7rem;
+  }
+
+  .sale-item__remove {
+    grid-column: 1 / -1;
+    min-height: 43px;
+  }
+
+  .sale-form-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

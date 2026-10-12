@@ -2,11 +2,12 @@
 
 const TOKEN_STORAGE_KEY = "smartStock.accessToken";
 const PAGE_SIZE = 100;
+const MAX_BATCH_ITEMS = 50;
 const token = sessionStorage.getItem(TOKEN_STORAGE_KEY);
 const apiBaseUrl = window.SMART_STOCK_CONFIG?.apiBaseUrl?.replace(/\/+$/, "");
-const productSelect = document.querySelector("[data-sale-product]");
-const quantityInput = document.querySelector("[data-sale-quantity]");
-const availableStock = document.querySelector("[data-available-stock]");
+const saleForm = document.querySelector("[data-sale-form]");
+const saleItems = document.querySelector("[data-sale-items]");
+const addItemButton = document.querySelector("[data-add-item]");
 const salesBody = document.querySelector("[data-sales-body]");
 const salesCount = document.querySelector("[data-sales-count]");
 const salesMessage = document.querySelector("[data-sales-message]");
@@ -101,10 +102,6 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function selectedProduct() {
-  return products.find((product) => product.id === productSelect.value);
-}
-
 function activeFilterParams() {
   const params = new URLSearchParams();
   if (filterFrom.value) params.set("date_from", filterFrom.value);
@@ -113,38 +110,88 @@ function activeFilterParams() {
   return params;
 }
 
-function updateSelectedStock() {
-  const product = selectedProduct();
-  availableStock.textContent = product ? String(product.stock_quantity) : "—";
-  quantityInput.max = product ? String(product.stock_quantity) : "2147483647";
-  if (!product || product.stock_quantity < 1) {
-    quantityInput.value = "";
-    quantityInput.disabled = true;
-    submitSaleButton.disabled = true;
-    return;
-  }
-  quantityInput.disabled = false;
-  submitSaleButton.disabled = false;
+function productById(productId) {
+  return products.find((product) => product.id === productId);
 }
 
-function renderProductOptions() {
-  const availableProductId = productSelect.value;
-  productSelect.replaceChildren(new Option("Select a product", ""));
+function fillProductSelect(select, preferredValue) {
+  if (products.length === 0) {
+    select.replaceChildren(new Option("No products found", ""));
+    return;
+  }
+  select.replaceChildren(new Option("Select a product", ""));
   products.forEach((product) => {
     const option = new Option(
       `${product.name} (${product.sku}) · ${product.stock_quantity} available`,
       product.id,
     );
     option.disabled = product.stock_quantity < 1;
-    productSelect.add(option);
+    select.add(option);
   });
-  if (products.some((product) => product.id === availableProductId)) {
-    productSelect.value = availableProductId;
+  if (preferredValue && productById(preferredValue)) {
+    select.value = preferredValue;
   }
-  if (products.length === 0) {
-    productSelect.replaceChildren(new Option("No products found", ""));
-    submitSaleButton.disabled = true;
+}
+
+function updateRowStock(row) {
+  const select = row.querySelector("[data-item-product]");
+  const quantityInput = row.querySelector("[data-item-quantity]");
+  const stockElement = row.querySelector("[data-item-stock]");
+  const product = select ? productById(select.value) : null;
+
+  if (!product) {
+    stockElement.textContent = "—";
+    quantityInput.removeAttribute("max");
+    return;
   }
+  stockElement.textContent = String(product.stock_quantity);
+  quantityInput.max = String(product.stock_quantity);
+}
+
+function createItemRow() {
+  const row = document.createElement("div");
+  row.className = "sale-item";
+  row.innerHTML = `
+    <label class="form-field">
+      <span class="form-field__label">Product</span>
+      <select data-item-product></select>
+    </label>
+    <label class="form-field">
+      <span class="form-field__label">Quantity sold</span>
+      <input type="number" min="1" step="1" inputmode="numeric" placeholder="Qty" data-item-quantity />
+    </label>
+    <div class="sale-stock-panel" aria-live="polite">
+      <span class="sale-stock-panel__label">Available</span>
+      <strong data-item-stock>—</strong>
+    </div>
+    <button class="table-action table-action--delete sale-item__remove" type="button" data-remove-item>Remove</button>
+  `;
+  return row;
+}
+
+function refreshRows() {
+  saleItems.querySelectorAll(".sale-item").forEach((row) => {
+    const select = row.querySelector("[data-item-product]");
+    fillProductSelect(select, select.value);
+    updateRowStock(row);
+  });
+  addItemButton.disabled = products.length === 0 || saleItems.children.length >= MAX_BATCH_ITEMS;
+  submitSaleButton.disabled = products.length === 0;
+}
+
+function addItemRow() {
+  if (saleItems.children.length >= MAX_BATCH_ITEMS) return;
+  saleItems.appendChild(createItemRow());
+  refreshRows();
+}
+
+function resetBatchForm() {
+  saleItems.replaceChildren();
+  addItemRow();
+}
+
+function renderProductOptions() {
+  refreshRows();
 
   const filterSelection = filterProduct.value;
   filterProduct.replaceChildren(new Option("All products", ""));
@@ -154,8 +201,6 @@ function renderProductOptions() {
   if (products.some((product) => product.id === filterSelection)) {
     filterProduct.value = filterSelection;
   }
-
-  updateSelectedStock();
 }
 
 function renderSales() {
@@ -166,7 +211,7 @@ function renderSales() {
   loadMoreWrap.hidden = shown >= totalSalesCount;
 
   if (sales.length === 0) {
-    salesBody.innerHTML = '<tr><td class="products-table__status" colspan="6">No sales recorded yet. Record your first sale above.</td></tr>';
+    salesBody.innerHTML = '<tr><td class="products-table__status" colspan="7">No sales recorded yet. Record your first sale above.</td></tr>';
     return;
   }
 
@@ -179,6 +224,7 @@ function renderSales() {
       <td data-label="Quantity sold"><span class="stock-value">${sale.quantity}</span></td>
       <td data-label="Total amount">${formatMoney(sale.total_amount)}</td>
       <td data-label="Profit"><span class="${Number(sale.profit) < 0 ? "profit-value profit-value--negative" : "profit-value"}">${formatMoney(sale.profit)}</span></td>
+      <td data-label="Recorded by">${escapeHtml(sale.recorded_by_name || "—")}</td>
       <td data-label="Date">${escapeHtml(formatDate(sale.created_at))}</td>
       <td data-label="Actions" class="products-table__actions">
         <button class="table-action table-action--delete" type="button" data-void-sale="${escapeHtml(sale.id)}">Void &amp; restock</button>
@@ -192,6 +238,35 @@ function renderSummary(summary) {
   document.querySelector("[data-summary-profit]").textContent = formatMoney(summary.total_profit);
   document.querySelector("[data-summary-units]").textContent = Number(summary.total_units).toLocaleString();
   document.querySelector("[data-summary-count]").textContent = Number(summary.sale_count).toLocaleString();
+}
+
+function collectBatchItems() {
+  const items = [];
+  let error = null;
+  saleItems.querySelectorAll(".sale-item").forEach((row) => {
+    const select = row.querySelector("[data-item-product]");
+    const quantityInput = row.querySelector("[data-item-quantity]");
+    const productId = select.value;
+    const rawQuantity = quantityInput.value.trim();
+    if (!productId && rawQuantity === "") return;
+
+    if (!productId) {
+      error ??= "Choose a product for every item you add.";
+      return;
+    }
+    const quantity = Number(rawQuantity);
+    if (!Number.isSafeInteger(quantity) || quantity < 1) {
+      error ??= "Quantity sold must be a whole number greater than zero for every item.";
+      return;
+    }
+    const product = productById(productId);
+    if (product && quantity > product.stock_quantity) {
+      error ??= `Only ${product.stock_quantity} units of ${product.name} are available.`;
+      return;
+    }
+    items.push({ product_id: productId, quantity });
+  });
+  return { items, error };
 }
 
 async function loadSalesPage({ append = false } = {}) {
@@ -241,27 +316,54 @@ async function loadPageData() {
     }
     const { data: productList } = await apiRequest("/products");
     products = productList;
+    resetBatchForm();
     renderProductOptions();
     await reloadWithFilters();
   } catch (error) {
     showMessage(error.message);
-    productSelect.replaceChildren(new Option("Products could not be loaded", ""));
     submitSaleButton.disabled = true;
     salesCount.textContent = "—";
-    salesBody.innerHTML = '<tr><td class="products-table__status" colspan="6">Sales history could not be loaded.</td></tr>';
+    salesBody.innerHTML = '<tr><td class="products-table__status" colspan="7">Sales history could not be loaded.</td></tr>';
   }
 }
 
-productSelect.addEventListener("change", updateSelectedStock);
+saleItems.addEventListener("change", (event) => {
+  const row = event.target.closest(".sale-item");
+  if (row && event.target.matches("[data-item-product]")) updateRowStock(row);
+});
+
+saleItems.addEventListener("click", (event) => {
+  const removeButton = event.target.closest("[data-remove-item]");
+  if (!removeButton) return;
+  const row = removeButton.closest(".sale-item");
+  if (!row) return;
+  if (saleItems.children.length === 1) {
+    row.querySelector("[data-item-product]").value = "";
+    row.querySelector("[data-item-quantity]").value = "";
+    updateRowStock(row);
+    return;
+  }
+  row.remove();
+  refreshRows();
+});
+
+addItemButton.addEventListener("click", addItemRow);
+
 filterFrom.addEventListener("change", reloadWithFilters);
 filterTo.addEventListener("change", reloadWithFilters);
 filterProduct.addEventListener("change", reloadWithFilters);
 
 document.querySelector("[data-clear-filters]").addEventListener("click", () => {
+  clearMessage();
   filterFrom.value = "";
   filterTo.value = "";
   filterProduct.value = "";
-  reloadWithFilters();
+  sales = [];
+  totalSalesCount = 0;
+  currentOffset = 0;
+  salesCount.textContent = "Cleared";
+  loadMoreWrap.hidden = true;
+  salesBody.innerHTML = '<tr><td class="products-table__status" colspan="7">Sales history cleared from view. Refresh or change a filter to load sales again.</td></tr>';
 });
 
 loadMoreButton.addEventListener("click", async () => {
@@ -312,48 +414,50 @@ exportButton.addEventListener("click", async () => {
   }
 });
 
-document.querySelector("[data-sale-form]").addEventListener("submit", async (event) => {
+saleForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearMessage();
-  if (!event.currentTarget.reportValidity()) return;
+  if (!saleForm.reportValidity()) return;
 
-  const product = selectedProduct();
-  const quantity = Number(quantityInput.value);
-  if (!product) {
-    showMessage("Choose a product before recording a sale.");
+  const { items, error } = collectBatchItems();
+  if (error) {
+    showMessage(error);
     return;
   }
-  if (!Number.isSafeInteger(quantity) || quantity < 1) {
-    showMessage("Quantity sold must be a whole number greater than zero.");
-    return;
-  }
-  if (quantity > product.stock_quantity) {
-    showMessage(`Only ${product.stock_quantity} units of ${product.name} are available.`);
+  if (items.length === 0) {
+    showMessage("Add at least one product and quantity before recording sales.");
     return;
   }
 
   submitSaleButton.disabled = true;
   submitSaleButton.textContent = "Recording…";
   try {
-    const { data: sale } = await apiRequest("/sales", {
+    const { data: recorded } = await apiRequest("/sales/batch", {
       method: "POST",
-      body: JSON.stringify({ product_id: product.id, quantity }),
+      body: JSON.stringify({ items }),
     });
-    products = products.map((item) => (
-      item.id === product.id
-        ? { ...item, stock_quantity: item.stock_quantity - sale.quantity }
-        : item
+    const soldByProduct = new Map();
+    recorded.forEach((sale) => {
+      soldByProduct.set(sale.product_id, (soldByProduct.get(sale.product_id) || 0) + sale.quantity);
+    });
+    products = products.map((product) => (
+      soldByProduct.has(product.id)
+        ? { ...product, stock_quantity: product.stock_quantity - soldByProduct.get(product.id) }
+        : product
     ));
+    resetBatchForm();
     renderProductOptions();
-    quantityInput.value = "";
-    showMessage("Sale recorded and stock updated.", "success");
+    showMessage(
+      `${recorded.length} ${recorded.length === 1 ? "sale" : "sales"} recorded and stock updated.`,
+      "success",
+    );
     await reloadWithFilters();
   } catch (error) {
     showMessage(error.message);
     await loadPageData();
   } finally {
-    submitSaleButton.textContent = "Record sale";
-    updateSelectedStock();
+    submitSaleButton.textContent = "Record sales";
+    refreshRows();
   }
 });
 
