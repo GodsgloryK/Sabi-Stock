@@ -1,6 +1,6 @@
-"""Generate the Sabi-Stock project presentation."""
+"""Generate the Smart Stock project presentation."""
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
+from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
@@ -12,6 +12,8 @@ GRAY = RGBColor(0x78, 0x86, 0x7D)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 CREAM = RGBColor(0xF6, 0xF8, 0xF5)
 PLACEHOLDER = RGBColor(0xD8, 0xE2, 0xD8)
+
+BRAND = "Smart Stock"
 
 prs = Presentation()
 prs.slide_width = Inches(13.333)
@@ -109,18 +111,19 @@ def accent_bar(slide):
     bar.fill.fore_color.rgb = GREEN
     bar.line.fill.background()
 
+
 def footer(slide, page):
-    add_text(slide, 0.5, 7.05, 4, 0.3, "Sabi-Stock", size=10, color=GRAY)
+    add_text(slide, 0.5, 7.05, 4, 0.3, BRAND, size=10, color=GRAY)
     add_text(slide, 12.2, 7.05, 0.8, 0.3, str(page), size=10, color=GRAY, align=PP_ALIGN.RIGHT)
 
 
 # ── Slide 1: Title ──────────────────────────────────────────────
 slide = prs.slides.add_slide(BLANK)
 add_bg(slide, GREEN)
-add_text(slide, 1, 2.2, 11.3, 1.2, "Sabi-Stock", size=54, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
+add_text(slide, 1, 2.2, 11.3, 1.2, BRAND, size=54, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
 add_text(slide, 1, 3.5, 11.3, 0.8, "Inventory & Sales Management Platform for Small Businesses",
          size=22, color=RGBColor(0xC9, 0xD9, 0xBD), align=PP_ALIGN.CENTER)
-add_text(slide, 1, 4.6, 11.3, 0.5, "Products  ·  Inventory  ·  Sales  ·  Analytics  ·  Team",
+add_text(slide, 1, 4.6, 11.3, 0.5, "Products  ·  Inventory  ·  Sales  ·  Insights  ·  Team",
          size=14, color=RGBColor(0x9F, 0xC6, 0xA0), align=PP_ALIGN.CENTER)
 
 
@@ -146,7 +149,7 @@ add_text(slide, 0.7, 4.1, 11.9, 0.5, "The challenge: build a centralized platfor
 add_bullets(slide, 0.9, 4.7, 11.5, 2.4, [
     "Users: Business Owner  ·  Store Manager  ·  Sales Staff  ·  Administrator",
     "Core needs: product management, inventory tracking, sales recording, low-stock alerts, search & filtering, dashboard",
-    "Go beyond: analytics, trends, reports, export, staff management",
+    "Go beyond: demand forecasting, anomaly detection, an AI assistant, reports & export, staff management",
 ], size=14, color=GRAY)
 footer(slide, 2)
 
@@ -157,14 +160,14 @@ add_bg(slide)
 accent_bar(slide)
 add_text(slide, 0.7, 0.35, 11, 0.7, "Our Solution", size=32, color=DARK, bold=True)
 add_text(slide, 0.7, 1.05, 11.9, 0.5,
-         "A full-stack, multi-tenant web platform — live at sabi-stock-frontend.vercel.app",
+         "A full-stack, multi-tenant web platform — live on Vercel (frontend) and Render (API)",
          size=16, color=GRAY)
 
 solutions = [
     ("✅", "Product management", "Full CRUD with search, category filter, and price tracking"),
     ("✅", "Inventory tracking", "Stock auto-decrements on sale; void & restock restores it atomically"),
     ("✅", "Sales recording", "Server-computed totals & profit; live-stock product picker"),
-    ("✅", "Low-stock alerts", "Configurable per-business threshold; dashboard + product badges"),
+    ("✅", "Low-stock alerts", "Configurable per-business threshold, timezone & badges"),
     ("✅", "Dashboard & analytics", "KPIs, best-seller chart, 30-day revenue/profit trend line"),
     ("✅", "Staff management", "Owner invites stock managers via single-use 24h codes; revoke anytime"),
 ]
@@ -173,7 +176,7 @@ for i, (icon, title, body) in enumerate(solutions):
     row = i // 3
     add_card(slide, 0.7 + col * 4.1, 1.85 + row * 1.85, 3.9, 1.6, title, body, icon)
 
-add_text(slide, 0.7, 5.75, 11.9, 0.5, "Bonus: CSV export for sales & products  ·  ₦ currency  ·  Timezone-correct daily metrics  ·  Login rate-limiting",
+add_text(slide, 0.7, 5.75, 11.9, 0.5, "Bonus: AI forecasting, anomaly insights & a grounded shop assistant  ·  CSV export  ·  ₦ currency  ·  timezone-correct metrics  ·  login rate-limiting",
          size=13, color=GREEN, bold=True)
 footer(slide, 3)
 
@@ -185,7 +188,7 @@ accent_bar(slide)
 add_text(slide, 0.7, 0.35, 11, 0.7, "How It Works", size=32, color=DARK, bold=True)
 
 layers = [
-    ("Frontend", "Static HTML / CSS / vanilla JS\nDashboard · Products · Sales · Team\nChart.js for analytics", 0.7),
+    ("Frontend", "Static HTML / CSS / vanilla JS\nDashboard · Products · Sales · Insights · Team\nChart.js for analytics & forecast charts", 0.7),
     ("API", "FastAPI (Python) on Render\nJWT auth · Argon2 hashing\nRole-based access (Owner / Stock Manager)", 4.7),
     ("Database", "PostgreSQL (Neon)\nMulti-tenant: every query scoped by business_id\nTransactional stock integrity with row locks", 8.7),
 ]
@@ -221,24 +224,52 @@ add_bullets(slide, 0.9, 5.15, 11.5, 1.8, [
 footer(slide, 4)
 
 
-# ── Slide 5: Screenshots ────────────────────────────────────────
+# ── Slide 5: Use of AI ──────────────────────────────────────────
+slide = prs.slides.add_slide(BLANK)
+add_bg(slide)
+accent_bar(slide)
+add_text(slide, 0.7, 0.35, 11, 0.7, "Use of AI", size=32, color=DARK, bold=True)
+add_text(slide, 0.7, 1.02, 11.9, 0.5,
+         "AI that advises the owner — but never guesses. The model phrases facts; it never invents them.",
+         size=16, color=GRAY)
+
+ai_cards = [
+    ("📈", "Demand forecasting", "Per product: sales rate, trend, days of stock, projected stockout, reorder-by date and suggested order quantity."),
+    ("🔍", "Anomaly insights", "Flags sales spikes, demand drops, stale stock and below-cost selling — each with a severity."),
+    ("💬", "Grounded assistant", "Chat answers built from a live snapshot: today's sales & profit, low stock, top sellers, urgent reorders."),
+]
+for i, (icon, title, body) in enumerate(ai_cards):
+    add_card(slide, 0.7 + i * 4.1, 1.7, 3.9, 2.0, title, body, icon)
+
+add_text(slide, 0.7, 3.95, 11.9, 0.5, "How it stays trustworthy", size=18, color=DARK, bold=True)
+add_bullets(slide, 0.9, 4.5, 11.5, 2.4, [
+    "The numbers are computed in pure Python from SQL history — the LLM (Gemini) only rephrases those computed facts",
+    "Deterministic fallback: if the key is missing, the network fails, or the free tier rate-limits, a rules engine answers instead — the demo never fails",
+    "Every response reports its source (gemini or rules), so the user always knows where the answer came from",
+], size=13, color=GRAY, spacing=8)
+footer(slide, 5)
+
+
+# ── Slide 6: The Product (screenshots) ──────────────────────────
 slide = prs.slides.add_slide(BLANK)
 add_bg(slide)
 accent_bar(slide)
 add_text(slide, 0.7, 0.35, 11, 0.7, "The Product", size=32, color=DARK, bold=True)
 
 pages = [
-    ("Dashboard", 0.7, 1.2),
-    ("Products", 7.0, 1.2),
-    ("Sales", 0.7, 4.15),
-    ("Team Management", 7.0, 4.15),
+    ("Dashboard", 0.7, 1.1),
+    ("Insights (AI)", 7.0, 1.1),
+    ("Products", 0.7, 3.15),
+    ("Sales", 7.0, 3.15),
+    ("Shop Assistant", 0.7, 5.2),
+    ("Team & Settings", 7.0, 5.2),
 ]
 for label, left, top in pages:
-    add_placeholder(slide, left, top, 5.6, 2.7, label)
-footer(slide, 5)
+    add_placeholder(slide, left, top, 5.6, 1.85, label)
+footer(slide, 6)
 
 
-# ── Slide 6: Results ────────────────────────────────────────────
+# ── Slide 7: Results ────────────────────────────────────────────
 slide = prs.slides.add_slide(BLANK)
 add_bg(slide)
 accent_bar(slide)
@@ -246,9 +277,9 @@ add_text(slide, 0.7, 0.35, 11, 0.7, "Results", size=32, color=DARK, bold=True)
 
 metrics = [
     ("100%", "Core requirements\ndelivered"),
-    ("35", "Automated unit\ntests passing"),
-    ("18", "REST API\nendpoints"),
-    ("6", "Application\npages"),
+    ("73", "Automated unit\ntests passing"),
+    ("30", "REST API\noperations"),
+    ("10", "Application\npages"),
 ]
 for i, (num, label) in enumerate(metrics):
     left = 0.7 + i * 3.1
@@ -275,13 +306,13 @@ for i, (num, label) in enumerate(metrics):
 
 add_text(slide, 0.7, 3.7, 11.9, 0.5, "Deployed & production-ready", size=18, color=DARK, bold=True)
 add_bullets(slide, 0.9, 4.25, 11.5, 2.5, [
-    "Live frontend on Vercel  ·  API on Render  ·  Database on Neon (PostgreSQL)",
-    "CI runs the full test suite on every push via GitHub Actions",
-    "Database migrations (001–004) applied and verified against production",
-    "All six product pages tested end-to-end against the live API",
+    "Live frontend on Vercel  ·  FastAPI on Render  ·  Database on Neon (PostgreSQL)",
+    "AI: forecasting + anomaly insights + a grounded assistant (Gemini, with a deterministic fallback)",
+    "CI runs the full 73-test suite on every push via GitHub Actions",
+    "Migrations 001–006 applied; all ten pages validated end-to-end against the live API",
 ], size=14, color=GRAY, spacing=8)
-footer(slide, 6)
+footer(slide, 7)
 
 
-prs.save("Sabi-Stock-Presentation.pptx")
-print("saved: Sabi-Stock-Presentation.pptx")
+prs.save("Smart-Stock-Presentation.pptx")
+print("saved: Smart-Stock-Presentation.pptx")

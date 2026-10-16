@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Manage team members and invitations for your Smart-Stock business." />
+    <meta name="description" content="Manage team members and invitations for your Smart Stock business." />
     <meta name="theme-color" content="#E7E2DB" />
-    <title>Team — Smart-Stock</title>
+    <title>Team — Smart Stock</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,10 +16,11 @@
     <script src="./js/config.js" defer></script>
     <script src="./js/team.js" defer></script>
     <script src="./js/help.js" defer></script>
+    <script src="./js/assistant.js" defer></script>
   </head>
   <body class="products-page">
     <header class="site-header products-header">
-      <a class="brand" href="./index.html" aria-label="Smart-Stock home">
+      <a class="brand" href="./index.html" aria-label="Smart Stock home">
         <span class="brand__mark" aria-hidden="true">
           <svg viewBox="0 0 32 32" fill="none">
             <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
@@ -27,10 +28,11 @@
             <path d="m11 7 11 5.6" />
           </svg>
         </span>
-        <span>Smart<span class="brand__accent">-Stock</span></span>
+        <span>Smart <span class="brand__accent">Stock</span></span>
       </a>
       <nav class="dashboard-nav" aria-label="Workspace navigation">
         <a class="dashboard-nav__link" href="./dashboard.html">Dashboard</a>
+        <a class="dashboard-nav__link" href="./insights.html">Insights</a>
         <a class="dashboard-nav__link" href="./products.html">Products</a>
         <a class="dashboard-nav__link" href="./all-stock.html">All stock</a>
         <a class="dashboard-nav__link" href="./sales.html">Sales</a>
@@ -72,6 +74,40 @@
           </div>
           <p class="invite-code-panel__expiry" data-invitation-expiry></p>
         </div>
+      </section>
+
+      <section class="products-card" aria-labelledby="business-settings-title" data-owner-only hidden>
+        <div class="products-card__top">
+          <div>
+            <h2 id="business-settings-title">Business settings</h2>
+            <p>Low-stock alerts and dashboard totals follow these settings.</p>
+          </div>
+        </div>
+        <form class="business-settings-form" data-settings-form>
+          <div class="form-field">
+            <label for="settings-threshold">Low-stock alert threshold</label>
+            <input id="settings-threshold" type="number" min="0" max="10000" required data-settings-threshold />
+            <p class="form-hint">Products below this stock count are flagged as low on every page.</p>
+          </div>
+          <div class="form-field">
+            <label for="settings-timezone">Business timezone</label>
+            <select id="settings-timezone" required data-settings-timezone>
+              <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
+              <option value="Africa/Accra">Africa/Accra</option>
+              <option value="Africa/Nairobi">Africa/Nairobi</option>
+              <option value="Africa/Johannesburg">Africa/Johannesburg</option>
+              <option value="Africa/Cairo">Africa/Cairo</option>
+              <option value="Africa/Kampala">Africa/Kampala</option>
+              <option value="Europe/London">Europe/London</option>
+              <option value="UTC">UTC</option>
+              <option value="America/New_York">America/New_York</option>
+            </select>
+            <p class="form-hint">Used to calculate today's sales and profit on the dashboard.</p>
+          </div>
+          <div>
+            <button class="button" type="submit" data-settings-save>Save settings</button>
+          </div>
+        </form>
       </section>
 
       <section class="products-card" aria-labelledby="members-list-title">

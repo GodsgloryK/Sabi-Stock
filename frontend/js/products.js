@@ -12,7 +12,7 @@ const categoryFilter = document.querySelector("[data-category-filter]");
 const searchInput = document.querySelector("[data-search]");
 const exportProductsButton = document.querySelector("[data-export-products]");
 
-const LOW_STOCK_THRESHOLD = 5;
+let lowStockThreshold = 5;
 let products = [];
 let editingProductId = null;
 
@@ -44,7 +44,7 @@ async function apiRequest(path, options = {}) {
       },
     });
   } catch {
-    throw new Error("Unable to reach Smart-Stock. Check your connection and try again.");
+    throw new Error("Unable to reach Smart Stock. Check your connection and try again.");
   }
 
   if (response.status === 401) {
@@ -78,7 +78,7 @@ function stockBadge(quantity) {
   if (quantity === 0) {
     return `<span class="stock-value">${quantity}</span><span class="stock-badge stock-badge--out">Out</span>`;
   }
-  if (quantity < LOW_STOCK_THRESHOLD) {
+  if (quantity < lowStockThreshold) {
     return `<span class="stock-value">${quantity}</span><span class="stock-badge stock-badge--low">Low</span>`;
   }
   return `<span class="stock-value">${quantity}</span>`;
@@ -329,6 +329,7 @@ async function initializeProductsPage() {
 
   try {
     const user = await apiRequest("/auth/me");
+    lowStockThreshold = Number(user.low_stock_threshold) || 5;
     document.querySelector("[data-business-identity]").textContent = `${user.full_name} · ${user.business_name}`;
     if (user.role === "owner") {
       document.querySelectorAll("[data-owner-only]").forEach((element) => { element.hidden = false; });

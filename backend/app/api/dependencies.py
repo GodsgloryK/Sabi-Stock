@@ -45,7 +45,8 @@ def get_current_user(
                 user = cursor.execute(
                     """
                     SELECT u.id, u.full_name, u.email, b.id AS business_id,
-                           b.name AS business_name, m.role
+                           b.name AS business_name, b.low_stock_threshold,
+                           b.timezone, m.role
                     FROM users AS u
                     JOIN business_memberships AS m ON m.user_id = u.id
                     JOIN businesses AS b ON b.id = m.business_id

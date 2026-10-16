@@ -1,8 +1,8 @@
 {
-  "name": "sabi-stock",
+  "name": "smart-stock",
   "private": true,
   "version": "1.0.0",
-  "description": "Static frontend build helpers for Sabi-Stock.",
+  "description": "Static frontend build helpers for Smart Stock.",
   "scripts": {
     "build": "node scripts/build_frontend_config.js"
   },

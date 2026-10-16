@@ -98,7 +98,7 @@ async function submitAuthForm(event) {
     window.location.assign("./dashboard.html");
   } catch (error) {
     if (error instanceof TypeError) {
-      setFormMessage("Unable to reach Smart-Stock. Check your connection and try again.");
+      setFormMessage("Unable to reach Smart Stock. Check your connection and try again.");
     } else {
       setFormMessage(error instanceof Error ? error.message : "Something went wrong. Please try again.");
     }

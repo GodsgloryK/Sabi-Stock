@@ -255,7 +255,7 @@ async function requestJson(path) {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch {
-    throw new Error("Unable to reach Smart-Stock. Check your connection and try again.");
+    throw new Error("Unable to reach Smart Stock. Check your connection and try again.");
   }
 
   if (response.status === 401) {

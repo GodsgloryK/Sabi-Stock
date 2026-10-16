@@ -1,18 +1,20 @@
-# Sabi-Stock
+# Smart Stock
 
-Multi-business inventory and sales management application with owner/stock-manager authentication, product catalogue, inventory tracking, sales recording, low-stock alerts, team invitations, and CSV export.
+Multi-business inventory and sales management application with owner/stock-manager authentication, product catalogue, inventory tracking, sales recording, low-stock alerts, team invitations, CSV export, and an AI layer (demand forecasting, anomaly insights, and a grounded shop assistant).
 
 ## Project layout
 
-- `frontend/` — static HTML, CSS, and vanilla JavaScript pages (landing, auth, dashboard, products, sales, team)
-- `backend/` — FastAPI application and PostgreSQL connection layer
+- `frontend/` — static HTML, CSS, and vanilla JavaScript pages (landing, auth, dashboard, products, sales, team, insights)
+- `backend/` — FastAPI application, PostgreSQL connection layer, and the AI services under `backend/app/services/`
+- `scripts/` — supporting utilities (frontend config build, presentation generator, demo seeder)
 
 ## Run the backend locally
 
 1. Create and activate a virtual environment from `backend/`.
 2. Install dependencies with `pip install -r requirements.txt`.
 3. Copy `backend/.env.example` to `backend/.env`, set `DATABASE_URL` to a PostgreSQL connection string, and set `JWT_SECRET_KEY` to a random secret of at least 32 characters (generate one with `python -c "import secrets; print(secrets.token_urlsafe(48))"`).
-4. Start the API from `backend/` with `uvicorn app.main:app --reload`.
+4. Optional: set `GEMINI_API_KEY` (free key from https://aistudio.google.com/apikey) and `AI_MODEL` (default `gemini-3.5-flash`) to enable live AI narration and chat. Without a key the AI endpoints still work using the deterministic rules fallback.
+5. Start the API from `backend/` with `uvicorn app.main:app --reload`.
 
 Apply `backend/app/db/schema.sql` to the Neon database before using the API (for example, `psql "$DATABASE_URL" -f backend/app/db/schema.sql`). The schema is intentionally not applied automatically at startup.
 
@@ -60,18 +62,50 @@ Product IDs are case-insensitive and unique per business. A retired-ID registry 
 - `GET /api/reports/export/sales.csv` — CSV export of sales (includes a Product ID column); supports `date_from`, `date_to`, and `product_id` filters.
 - `GET /api/reports/export/products.csv` — CSV export of the product catalogue (includes a Product ID column).
 
+### Business settings
+
+- `GET /api/business/settings` — read the business's `low_stock_threshold` and `timezone`.
+- `PUT /api/business/settings` — owner-only; update the low-stock threshold and the IANA timezone (validated server-side, e.g. `Africa/Lagos`). The timezone drives every "today" calculation and the daily buckets in the AI features.
+
+### AI
+
+All three endpoints are scoped to the authenticated user's business. The model never invents or recomputes figures: numbers come from the pure-Python forecasting/insight engines and SQL, and Gemini is only asked to phrase those facts. Every call has a deterministic fallback so the app still responds when the API key is missing, the network fails, or the free tier rate-limits a request.
+
+- `GET /api/ai/forecast` — per-product demand forecast (average daily rate, trend vs. the previous month, days of stock, projected stockout date, reorder-by date, suggested order quantity, and urgency OUT/CRITICAL/SOON/OK/NO_SALES), plus a plain-language restock briefing. `briefing_source` is `gemini` or `rules`.
+- `GET /api/ai/insights` — detected anomalies: `sales_spike`, `demand_drop`, `stale_stock`, and `below_cost_sale`, each with a severity.
+- `POST /api/ai/assistant` — grounded chat. The request carries the message and optional prior turns; the reply is built from a fresh business snapshot (today's sales/profit, totals, low stock, top sellers, urgent reorders). Rate-limited to 20 requests per user per minute (`429` on excess).
+
 Send authenticated requests with `Authorization: Bearer <access_token>`. Access tokens expire after `JWT_EXPIRE_MINUTES` (60 by default). User membership is rechecked against PostgreSQL for authenticated requests, so removed membership immediately loses access. All business-owned tables include a non-null `business_id` and all queries scope through the authenticated user's `business_id`.
 
 ## Frontend
 
-Protected pages share Dashboard / Products / Sales / Team navigation (Team is owner-only), account context, and logout:
+Protected pages share Dashboard / Products / Sales / Insights / Team navigation (Team is owner-only), account context, and logout:
 
 - `frontend/dashboard.html` — KPI cards, best-sellers bar chart, 30-day revenue/profit trend line chart, low-stock panel, auto-refresh every 60 seconds.
 - `frontend/products.html` — product CRUD (each product has a unique, manually entered Product ID), live search (name or ID), category filter, low-stock/out-of-stock badges, CSV export.
 - `frontend/sales.html` — record sales from live stock, date-range and product filters, summary cards, paginated history with the recording team member, load-more, void & restock, CSV export.
-- `frontend/team.html` — owner-only; list members, invite stock managers with single-use codes, revoke invitations, remove members.
+- `frontend/insights.html` — the AI briefing banner, a ranked restock table (urgency badge, reorder-by date, suggested quantity), a per-product demand chart (solid history, dashed forecast), and a "needs attention" anomaly list.
+- `frontend/team.html` — owner-only; list members, invite stock managers with single-use codes, revoke invitations, remove members, and edit business settings (low-stock threshold and timezone).
+
+Every protected page also loads the floating **Shop Assistant** (`frontend/js/assistant.js`): a chat panel with suggested prompts that answers from the same computed snapshot used by the AI endpoints.
 
 `frontend/join.html` lets a stock manager create an account with an invitation code. The returned token is held in `sessionStorage`, so it is cleared when the browser tab session ends.
+
+## Demo data
+
+To populate a realistic demo business (20 Nigerian retail products, 90 days of sales history, and embedded anomalies such as a La Casera sales spike, a Bua Sugar demand drop, stale Toughon Rice, and below-cost Oatmeal sales):
+
+```
+python scripts/seed_demo.py           # aborts if the demo already exists
+python scripts/seed_demo.py --force   # wipe and re-seed
+```
+
+It is deterministic and idempotent, and prints the login when it finishes:
+
+- Email: `demo@smartstock.app`
+- Password: `SmartStockDemo!2026`
+
+Suggested walkthrough: log in → open **Insights** to see the briefing and anomalies → open a product's demand chart → ask the assistant "What should I restock this week?" → export a CSV from **Sales**.
 
 ## Migrations
 
@@ -92,7 +126,7 @@ Run the backend unit tests from `backend/` with `python -m unittest discover -s 
 
 ## Deploy
 
-- **Render:** create a Blueprint service from `render.yaml`. Set `DATABASE_URL` to the Neon connection string, `FRONTEND_ORIGINS` to the deployed frontend origin, and `JWT_SECRET_KEY` to a random secret of at least 32 characters in the Render environment.
+- **Render:** create a Blueprint service from `render.yaml`. Set `DATABASE_URL` to the Neon connection string, `FRONTEND_ORIGINS` to the deployed frontend origin, and `JWT_SECRET_KEY` to a random secret of at least 32 characters in the Render environment. Optionally set `GEMINI_API_KEY` (and `AI_MODEL`, default `gemini-3.5-flash`) to enable live AI.
 - **Vercel:** import the repository and leave the project Root Directory empty (the repository root). `vercel.json` runs `scripts/build_frontend_config.js`, which rewrites `frontend/js/config.js` from the `API_BASE_URL` environment variable when it is set (and leaves the committed value alone when it is not), then serves the static site from `frontend/`. Do not set the Root Directory to `frontend`: the build script and `vercel.json` paths are resolved from the repository root, and a `frontend` Root Directory makes the build fail with `Cannot find module .../frontend/scripts/build_frontend_config.js`.
 
 For local frontend development, serve `frontend/` with any static file server and set `apiBaseUrl` in `frontend/js/config.js` to `http://127.0.0.1:8000`.

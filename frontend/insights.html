@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="AI restock forecasts and anomaly detection for your Smart Stock business." />
+    <meta name="theme-color" content="#E7E2DB" />
+    <title>Insights — Smart Stock</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+    <script src="./js/config.js" defer></script>
+    <script src="./js/insights.js" defer></script>
+    <script src="./js/help.js" defer></script>
+    <script src="./js/assistant.js" defer></script>
+  </head>
+  <body class="dashboard-page">
+    <header class="site-header dashboard-header">
+      <a class="brand" href="./index.html" aria-label="Smart Stock home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+            <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+            <path d="m11 7 11 5.6" />
+          </svg>
+        </span>
+        <span>Smart <span class="brand__accent">Stock</span></span>
+      </a>
+      <nav class="dashboard-nav" aria-label="Workspace navigation">
+        <a class="dashboard-nav__link" href="./dashboard.html">Dashboard</a>
+        <a class="dashboard-nav__link dashboard-nav__link--active" href="./insights.html" aria-current="page">Insights</a>
+        <a class="dashboard-nav__link" href="./products.html">Products</a>
+        <a class="dashboard-nav__link" href="./all-stock.html">All stock</a>
+        <a class="dashboard-nav__link" href="./sales.html">Sales</a>
+        <a class="dashboard-nav__link" href="./team.html" data-owner-only hidden>Team</a>
+      </nav>
+      <div class="dashboard-header__account">
+        <span class="dashboard-avatar" aria-hidden="true" data-avatar>•</span>
+        <span class="dashboard-header__identity" data-user-identity>Loading account…</span>
+        <button class="button button--secondary button--small" type="button" data-logout>Log out</button>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <section class="dashboard-title">
+        <div>
+          <p class="eyebrow"><span class="eyebrow__dot"></span> AI forecasting</p>
+          <h1>Restock with confidence.</h1>
+          <p class="dashboard-title__subtext">
+            Demand forecasts and anomaly detection computed from your own sales history.
+          </p>
+        </div>
+        <div class="dashboard-title__actions">
+          <p class="dashboard-updated" data-last-updated>Waiting for latest data</p>
+          <button class="button button--secondary refresh-button" type="button" data-refresh>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.4 8A6.7 6.7 0 0 0 4.7 5.5L3 7.2M3.2 3.7v3.7h3.7M3.6 12a6.7 6.7 0 0 0 11.7 2.5l1.7-1.7m-.2 3.5v-3.7h-3.7" /></svg>
+            <span data-refresh-label>Refresh analysis</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="dashboard-message" role="alert" aria-live="polite" data-insights-message hidden></div>
+
+      <section class="ai-briefing" aria-label="AI restock briefing">
+        <span class="ai-briefing__icon" aria-hidden="true">✳</span>
+        <div class="ai-briefing__body">
+          <p class="ai-briefing__label">
+            Restock briefing
+            <span class="ai-briefing__source" data-briefing-source></span>
+          </p>
+          <p class="ai-briefing__text" data-briefing>Analysing your sales history…</p>
+        </div>
+      </section>
+
+      <section class="dashboard-panel restock-panel">
+        <div class="dashboard-panel__heading">
+          <div>
+            <h2>AI restock planner</h2>
+            <p>Forecast from your last 60 days of sales · lead time <span data-lead-time>3</span> days</p>
+          </div>
+          <span class="panel-period">60-day window</span>
+        </div>
+        <div class="dashboard-table-wrap">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th scope="col">Product</th>
+                <th scope="col">Stock</th>
+                <th scope="col">Avg/day</th>
+                <th scope="col">Trend</th>
+                <th scope="col">Runs out</th>
+                <th scope="col">Order by</th>
+                <th scope="col">Order qty</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody data-restock-body>
+              <tr><td class="dashboard-table__empty" colspan="8">Running the forecast…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="dashboard-content-grid">
+        <article class="dashboard-panel chart-panel">
+          <div class="dashboard-panel__heading">
+            <div>
+              <h2>Forecast chart</h2>
+              <p>30 days of history (solid) and the next 7 days (dashed)</p>
+            </div>
+            <select class="panel-select" data-forecast-product aria-label="Choose a product to chart"></select>
+          </div>
+          <div class="chart-container" data-chart-container>
+            <canvas id="forecast-chart" aria-label="Line chart of daily units sold with a dashed forecast"></canvas>
+          </div>
+          <p class="panel-empty" data-forecast-chart-empty hidden>No sales history for this product yet.</p>
+        </article>
+
+        <article class="dashboard-panel attention-panel">
+          <div class="dashboard-panel__heading">
+            <div>
+              <h2>Needs attention</h2>
+              <p>Unusual patterns detected in your sales data</p>
+            </div>
+            <span class="panel-period" data-insight-count>—</span>
+          </div>
+          <div class="insight-list" data-insight-list>
+            <p class="panel-loading">Scanning recent sales…</p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="dashboard-footer">
+      <span>Smart Stock</span>
+      <span>Your business, clearly in view.</span>
+    </footer>
+  </body>
+</html>

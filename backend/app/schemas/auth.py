@@ -56,6 +56,8 @@ class UserResponse(BaseModel):
     business_id: UUID
     business_name: str
     role: str
+    low_stock_threshold: int = 5
+    timezone: str = "Africa/Lagos"
 
 
 class AuthResponse(BaseModel):

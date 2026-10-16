@@ -48,8 +48,8 @@ function injectHelpButton() {
   button.type = "button";
   button.setAttribute("data-help-open", "");
   button.setAttribute("aria-haspopup", "dialog");
-  button.setAttribute("aria-label", "How to use Smart-Stock");
-  button.title = "How to use Smart-Stock";
+  button.setAttribute("aria-label", "How to use Smart Stock");
+  button.title = "How to use Smart Stock";
   button.textContent = "?";
   logoutButton.parentElement.insertBefore(button, logoutButton);
 }
@@ -65,7 +65,7 @@ function injectHelpDialog() {
     <div class="help-dialog__head">
       <div>
         <p class="eyebrow"><span class="eyebrow__dot"></span> Quick guide</p>
-        <h2 id="help-dialog-title">How to use Smart-Stock</h2>
+        <h2 id="help-dialog-title">How to use Smart Stock</h2>
       </div>
       <button class="icon-button" type="button" data-help-close aria-label="Close guide">×</button>
     </div>

@@ -13,6 +13,10 @@ const inviteCodeElement = document.querySelector("[data-invitation-code]");
 const inviteExpiryElement = document.querySelector("[data-invitation-expiry]");
 const inviteButton = document.querySelector("[data-invite-button]");
 const copyCodeButton = document.querySelector("[data-copy-code]");
+const settingsForm = document.querySelector("[data-settings-form]");
+const settingsThresholdInput = document.querySelector("[data-settings-threshold]");
+const settingsTimezoneSelect = document.querySelector("[data-settings-timezone]");
+const settingsSaveButton = document.querySelector("[data-settings-save]");
 
 let currentUser = null;
 
@@ -44,7 +48,7 @@ async function apiRequest(path, options = {}) {
       },
     });
   } catch {
-    throw new Error("Unable to reach Smart-Stock. Check your connection and try again.");
+    throw new Error("Unable to reach Smart Stock. Check your connection and try again.");
   }
 
   if (response.status === 401) {
@@ -175,6 +179,45 @@ function closeInviteCard() {
   inviteExpiryElement.textContent = "";
 }
 
+function populateSettingsForm(businessSettings) {
+  settingsThresholdInput.value = String(Number(businessSettings.low_stock_threshold) || 5);
+  const timezone = businessSettings.timezone || "Africa/Lagos";
+  const hasTimezoneOption = [...settingsTimezoneSelect.options]
+    .some((option) => option.value === timezone);
+  if (!hasTimezoneOption) {
+    settingsTimezoneSelect.add(new Option(timezone, timezone));
+  }
+  settingsTimezoneSelect.value = timezone;
+}
+
+settingsForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearMessage();
+  settingsSaveButton.disabled = true;
+  const originalLabel = settingsSaveButton.textContent;
+  settingsSaveButton.textContent = "Saving…";
+  try {
+    const updated = await apiRequest("/business/settings", {
+      method: "PUT",
+      body: JSON.stringify({
+        low_stock_threshold: Number(settingsThresholdInput.value),
+        timezone: settingsTimezoneSelect.value,
+      }),
+    });
+    if (currentUser) {
+      currentUser.low_stock_threshold = updated.low_stock_threshold;
+      currentUser.timezone = updated.timezone;
+    }
+    populateSettingsForm(updated);
+    showMessage("Business settings saved. Low-stock badges and dashboard totals now use them.", "success");
+  } catch (error) {
+    showMessage(error.message);
+  } finally {
+    settingsSaveButton.disabled = false;
+    settingsSaveButton.textContent = originalLabel;
+  }
+});
+
 inviteButton.addEventListener("click", async () => {
   clearMessage();
   inviteButton.disabled = true;
@@ -277,6 +320,7 @@ async function initializeTeamPage() {
       return;
     }
     document.querySelectorAll("[data-owner-only]").forEach((element) => { element.hidden = false; });
+    populateSettingsForm(currentUser);
     await loadTeamData();
   } catch (error) {
     showMessage(error.message);

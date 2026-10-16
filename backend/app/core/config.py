@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     frontend_origins: str = "https://sabi-stock-frontend.vercel.app/"
     jwt_secret_key: str | None = None
     jwt_expire_minutes: int = Field(default=60, gt=0)
+    gemini_api_key: str | None = None
+    ai_model: str = "gemini-3.5-flash"
+    restock_lead_time_days: int = Field(default=3, ge=0, le=60)
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_ROOT / ".env",

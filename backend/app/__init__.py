@@ -1,1 +1,1 @@
-"""Sabi-Stock API application."""
+"""Smart Stock API application."""

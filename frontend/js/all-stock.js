@@ -1,7 +1,7 @@
 "use strict";
 
 const TOKEN_STORAGE_KEY = "smartStock.accessToken";
-const LOW_STOCK_THRESHOLD = 5;
+let lowStockThreshold = 5;
 const token = sessionStorage.getItem(TOKEN_STORAGE_KEY);
 const apiBaseUrl = window.SMART_STOCK_CONFIG?.apiBaseUrl?.replace(/\/+$/, "");
 const groupsContainer = document.querySelector("[data-category-groups]");
@@ -34,7 +34,7 @@ async function apiRequest(path, options = {}) {
       },
     });
   } catch {
-    throw new Error("Unable to reach Smart-Stock. Check your connection and try again.");
+    throw new Error("Unable to reach Smart Stock. Check your connection and try again.");
   }
 
   if (response.status === 401) {
@@ -71,7 +71,7 @@ function stockBadge(quantity) {
   if (quantity === 0) {
     return `<span class="stock-value">${formatCount(quantity)}</span><span class="stock-badge stock-badge--out">Out</span>`;
   }
-  if (quantity < LOW_STOCK_THRESHOLD) {
+  if (quantity < lowStockThreshold) {
     return `<span class="stock-value">${formatCount(quantity)}</span><span class="stock-badge stock-badge--low">Low</span>`;
   }
   return `<span class="stock-value">${formatCount(quantity)}</span>`;
@@ -110,7 +110,7 @@ function categoryChips(items) {
   const parsedOut = items.filter((product) => Number(product.stock_quantity) === 0).length;
   const parsedLow = items.filter((product) => {
     const quantity = Number(product.stock_quantity);
-    return quantity > 0 && quantity < LOW_STOCK_THRESHOLD;
+    return quantity > 0 && quantity < lowStockThreshold;
   }).length;
   const chips = [
     `<span class="category-chip">${items.length} ${items.length === 1 ? "product" : "products"}</span>`,
@@ -210,6 +210,7 @@ async function initializeAllStockPage() {
 
   try {
     const user = await apiRequest("/auth/me");
+    lowStockThreshold = Number(user.low_stock_threshold) || 5;
     document.querySelector("[data-business-identity]").textContent = `${user.full_name} · ${user.business_name}`;
     if (user.role === "owner") {
       document.querySelectorAll("[data-owner-only]").forEach((element) => { element.hidden = false; });
