@@ -62,7 +62,7 @@ body::before {
   inset: 0;
   z-index: -1;
   background:
-    url("../images/Smart Stock%20Growth%20Logo%20(1).png") no-repeat center /
+    url("../images/Smart-Stock%20Growth%20Logo%20(1).png") no-repeat center /
     min(80vmin, 720px);
   opacity: var(--page-watermark-opacity);
   pointer-events: none;
@@ -1111,9 +1111,7 @@ h3 {
     width: 100%;
     margin: 0 auto;
   }
-}
 
-@media (max-width: 840px) {
   .site-header__inner {
     flex-wrap: wrap;
     justify-content: center;
@@ -1142,7 +1140,9 @@ h3 {
     justify-content: center;
     flex-wrap: wrap;
   }
+}
 
+@media (max-width: 840px) {
   .feature-grid {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
@@ -4048,3 +4048,88 @@ a.table-action {
 
 .header-section-links__link { display: inline-flex; align-items: center; padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid transparent; background: var(--gradient-brand); color: var(--color-on-primary); font-size: 0.85rem; text-decoration: none; white-space: nowrap; }
 .header-section-links__link:hover, .header-section-links__link:focus-visible { filter: brightness(1.05); }
+
+/* Testimonies */
+.testimonials-section {
+  padding-block: clamp(1.75rem, 6vw, 2.75rem);
+}
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.1rem 1.25rem;
+}
+
+.testimonial-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.25rem 1.3rem 1.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+  box-shadow: 0 10px 24px rgb(53 41 31 / 5%);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgb(53 41 31 / 10%);
+}
+
+.testimonial-card__rating {
+  margin: 0;
+  color: var(--color-primary-bright);
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+}
+
+.testimonial-card__quote {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.testimonial-card__person {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: auto;
+  padding-top: 0.4rem;
+}
+
+.testimonial-card__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-brand);
+  color: var(--color-on-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.testimonial-card__meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.testimonial-card__name {
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.testimonial-card__role {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 620px) {
+  .testimonial-grid {
+    grid-template-columns: 1fr;
+  }
+}
