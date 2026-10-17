@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -18,22 +18,33 @@
     <link rel="stylesheet" href="./css/styles.css" />
   </head>
   <body>
-    <header class="site-header site-header--centered">
+    <header class="site-header">
       <div class="site-header__inner">
-        <a class="brand site-header__brand" href="./index.html" aria-label="Smart Stock home">
-          <span class="brand__mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none">
-              <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
-              <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
-              <path d="m11 7 11 5.6" />
-            </svg>
-          </span>
-          <span class="brand__text">Smart <span class="brand__accent">Stock</span></span>
-        </a>
-        <nav class="site-nav" aria-label="Main navigation">
-          <a class="text-link" href="./login.html">Login</a>
-          <a class="button button--small" href="./register.html">Get Started</a>
-        </nav>
+        <div class="site-header__left">
+          <a class="brand site-header__brand" href="./index.html" aria-label="Smart Stock home">
+            <span class="brand__mark" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <path d="M5 9.5 16 4l11 5.5v13L16 28 5 22.5v-13Z" />
+                <path d="m5.5 9.8 10.5 5.4 10.5-5.4M16 15.5V27" />
+                <path d="m11 7 11 5.6" />
+              </svg>
+            </span>
+            <span class="brand__text">Smart <span class="brand__accent">Stock</span></span>
+          </a>
+        </div>
+        <div class="site-header__center">
+          <nav class="header-section-links" aria-label="Page sections">
+            <a class="header-section-links__link" href="#about">About Us</a>
+            <a class="header-section-links__link" href="#all-features">All features</a>
+            <a class="header-section-links__link" href="#how-to-utilise">How to utilise all features</a>
+          </nav>
+        </div>
+        <div class="site-header__right">
+          <nav class="site-nav" aria-label="Main navigation">
+            <a class="text-link" href="./login.html">Login</a>
+            <a class="button button--small" href="./register.html">Get Started</a>
+          </nav>
+        </div>
       </div>
     </header>
 
@@ -116,6 +127,86 @@
         </div>
       </section>
 
+      <section id="about" class="about-section page-container">
+        <div class="section-head">
+          <p class="eyebrow"><span class="eyebrow__dot"></span> About us</p>
+          <h2>About Us</h2>
+          <p class="section-lead">Smart Stock was built to stop business owners from losing money to poor stock management.Whether you run a small shop, a restaurant, or an online store, Smart Stock helps you track products, inventory, orders, sales, and performance in one lightweight dashboard.
+            
+          </p>
+        </div>
+      </section>
+
+      <section id="all-features" class="feature-section page-container" aria-labelledby="all-features-title">
+        <div class="feature-section__head section-head">
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Features</p>
+          <h2 id="all-features-title">All features</h2>
+          <p class="section-lead">Everything you need to run your store, in one place.</p>
+        </div>
+        <div class="feature-grid feature-grid--compact">
+          <article class="feature-card">
+            <span class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5v-7Z" />
+                <path d="m4.4 8.8 7.6 4.2 7.6-4.2M12 13v7" />
+              </svg>
+            </span>
+            <h2>Track stock in real time</h2>
+            <p>Know exactly what you have, with low-stock and out-of-stock badges and a configurable threshold.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 19V5m0 14h16" />
+                <path d="M8 15v-4m4 4V7m4 8v-6" />
+              </svg>
+            </span>
+            <h2>Record sales fast</h2>
+            <p>Pick from live stock, auto-decrement inventory, and snapshot prices and profit on each sale.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+                <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 20a6.4 6.4 0 0 0-2-4.6" />
+              </svg>
+            </span>
+            <h2>Work as a team</h2>
+            <p>Invite stock managers with single-use 24-hour codes, revoke invitations, and manage access easily.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 16.5 9 11l3.5 3.5L20 7" />
+                <path d="M15 7h5v5" />
+              </svg>
+            </span>
+            <h2>AI forecasting &amp; insights</h2>
+            <p>Get a restock briefing, reorder-by dates, suggested quantities, and anomalies for spikes, drops, stale stock, and below-cost sales.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 20.5a8.5 8.5 0 1 1 0-17 8.5 8.5 0 0 1 0 17Z" />
+                <path d="M9.5 9.5h.01M14.5 9.5h.01M8.5 13.5c1 1.5 3 2 5.5 1.5" />
+              </svg>
+            </span>
+            <h2>Grounded AI assistant</h2>
+            <p>Answers based on your live business snapshot — today's sales/profit, low stock, top sellers, and urgent reorders.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 7h16M4 12h16M4 17h10" />
+              </svg>
+            </span>
+            <h2>Reports &amp; export</h2>
+            <p>Export products and sales as CSV with date and product filters for quick record keeping.</p>
+          </article>
+        </div>
+      </section>
+
       <section class="how-section page-container" aria-labelledby="how-title">
         <div class="how-section__head">
           <p class="eyebrow"><span class="eyebrow__dot"></span> Quick guide</p>
@@ -160,6 +251,40 @@
             </span>
           </li>
         </ol>
+      </section>
+
+      <section id="how-to-utilise" class="how-util-section page-container" aria-labelledby="how-to-title">
+        <div class="section-head">
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Guide</p>
+          <h2 id="how-to-title">How to utilise all features</h2>
+          <p class="section-lead">A quick guide to get the most out of Smart Stock.</p>
+        </div>
+        <div class="util-grid">
+          <article class="util-item">
+            <h3>Dashboard</h3>
+            <p>See KPIs, best sellers, 30-day trends, and low-stock at a glance. Auto-refreshes every 60 seconds.</p>
+          </article>
+          <article class="util-item">
+            <h3>Products</h3>
+            <p>Add or edit products with a unique Product ID, search by name or ID, filter by category, and watch low-stock badges.</p>
+          </article>
+          <article class="util-item">
+            <h3>All stock</h3>
+            <p>Quickly review all products and quantities to spot what needs restocking.</p>
+          </article>
+          <article class="util-item">
+            <h3>Sales</h3>
+            <p>Record sales from live stock, filter by date or product, view paginated history, and void &amp; restock when needed.</p>
+          </article>
+          <article class="util-item">
+            <h3>Insights (AI)</h3>
+            <p>Check the AI briefing, ranked restock list, demand chart (history + forecast), and "needs attention" anomalies.</p>
+          </article>
+          <article class="util-item">
+            <h3>Team &amp; Settings (Owner)</h3>
+            <p>Invite or revoke stock managers, remove members, and set your low-stock threshold and timezone.</p>
+          </article>
+        </div>
       </section>
 
       <section class="value-strip" aria-label="What Smart Stock helps you manage">
@@ -208,3 +333,4 @@
     </footer>
   </body>
 </html>
+
