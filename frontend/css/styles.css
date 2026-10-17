@@ -45,13 +45,14 @@
 html {
   min-width: 320px;
   scroll-behavior: smooth;
+  scroll-padding-top: 6.5rem;
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--color-background);
   color: var(--color-text);
 }
@@ -4131,5 +4132,18 @@ a.table-action {
 @media (max-width: 620px) {
   .testimonial-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Sticky landing header */
+.site-header--sticky {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+@media (max-width: 1100px) {
+  html {
+    scroll-padding-top: 9.5rem;
   }
 }
